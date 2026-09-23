@@ -1,0 +1,19 @@
+# This is a comment. Comments are shown in grey.
+
+# Capo 2
+
+You can put [C]chords in [Am]the ex[F]act place you want them [G]with squ[E7]are b[C]rackets.
+
+  Chorus lines are
+  made with
+  two [F]spaces
+  before each [G]line
+
+1
+Stanza numbers go on their own line
+Just above the first line of the stanza
+
+2
+For languages like Spanish,
+You can join the end of one word and the start of the next
+with an under_score, like_this.

@@ -1,0 +1,12 @@
+{
+  "name": "songsheets",
+  "version": "1.0.0",
+  "description": "Create, transpose and export chord song sheets in the browser. No server.",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test",
+    "serve": "python -m http.server 8123",
+    "sync-css": "node tools/sync-css.js"
+  }
+}

@@ -1,0 +1,58 @@
+/* Songsheets — colour themes. Light and night values are songbase's (themes.scss).
+ * "auto" follows the operating system; data-theme on <html> forces light or night. */
+:root {
+  color-scheme: light;
+  --text: #333;
+  --background: #fff;
+  --title: #333;
+  --chord: #1f45ff;
+  --comment-color: #aaa;
+  --ui-color: #ccc;
+  --surface: #f6f6f7;
+  --surface-2: #ececef;
+  --border: #d9d9de;
+  --muted: #6b6b73;
+  --accent: #1f45ff;
+  --accent-contrast: #fff;
+  --danger: #c62828;
+  --ok: #2e7d32;
+  --shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --text: #fff;
+    --background: #000;
+    --title: #ccc;
+    --chord: #aaa;
+    --comment-color: #aaa;
+    --ui-color: #aaa;
+    --surface: #111114;
+    --surface-2: #1c1c21;
+    --border: #33333a;
+    --muted: #9a9aa3;
+    --accent: #8ea2ff;
+    --accent-contrast: #000;
+    --danger: #ef6b6b;
+    --ok: #66bb6a;
+    --shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+  }
+}
+:root[data-theme="night"] {
+  color-scheme: dark;
+  --text: #fff;
+  --background: #000;
+  --title: #ccc;
+  --chord: #aaa;
+  --comment-color: #aaa;
+  --ui-color: #aaa;
+  --surface: #111114;
+  --surface-2: #1c1c21;
+  --border: #33333a;
+  --muted: #9a9aa3;
+  --accent: #8ea2ff;
+  --accent-contrast: #000;
+  --danger: #ef6b6b;
+  --ok: #66bb6a;
+  --shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+}

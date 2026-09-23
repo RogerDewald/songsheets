@@ -1,0 +1,86 @@
+/* Songsheets — song sheet layout.
+ * This is songbase's chord technique (ReganRyanNZ/songbase, MIT, song_display.scss) with the
+ * fixed 17px chord band converted to em (17px at a 14px font = 1.2143em) so font size scales it.
+ * Each chord is an empty, absolutely positioned span sitting exactly where its [bracket] was;
+ * its label is drawn by ::after { content: attr(data-uncopyable-text) }. Chords take no width,
+ * never move the lyrics, and may overlap (space them by hand, e.g. [F#m  Bm]).
+ */
+.lyrics {
+  --band: 1.2143em;
+  --gutter: 1.7857em;
+  --indent: 1.5714em;
+  display: inline-block;
+  width: auto;
+  text-align: left;
+  margin-left: 1.4286em;
+  tab-size: var(--indent);
+  -moz-tab-size: var(--indent);
+  font-family: verdana, arial, helvetica, sans-serif;
+  color: var(--text, #333);
+}
+.lyrics .line {
+  min-height: 0.857em;
+  vertical-align: bottom;
+  white-space: pre-wrap;
+}
+.lyrics .chord-word {
+  display: inline-block;
+  padding-top: var(--band);
+  height: var(--band);
+  position: relative;
+}
+.lyrics .chord-word .chord {
+  color: var(--chord, #1f45ff);
+  white-space: pre;
+  position: absolute;
+  bottom: var(--band);
+  font-weight: normal;
+  font-style: normal;
+}
+/* Empty chord-words need content so the absolute chords line up with the text baseline. */
+.lyrics .chord-word::after {
+  content: "";
+  display: inline-block;
+}
+.lyrics .stanza-number {
+  position: absolute;
+  margin-left: calc(-1 * var(--gutter));
+}
+.lyrics .stanza-number.with-chords {
+  margin-top: var(--band);
+}
+.lyrics .chorus {
+  padding-left: var(--indent);
+  tab-size: 0;
+  -moz-tab-size: 0;
+}
+.lyrics .comment,
+.lyrics .transpose-preset {
+  color: var(--comment-color, #aaa);
+  font-size: 90%;
+}
+.lyrics .transpose-preset {
+  display: block;
+  padding-right: 1em;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.lyrics .transpose-preset.active {
+  color: var(--chord, #1f45ff);
+}
+.lyrics .transpose-preset:focus-visible {
+  outline: 2px solid var(--chord, #1f45ff);
+  outline-offset: 2px;
+}
+.lyrics .musical-tie {
+  width: 0.357em;
+  display: inline-block;
+  position: relative;
+  top: 0.214em;
+  left: -0.143em;
+  font-size: 0.643em;
+}
+[data-uncopyable-text]::after {
+  content: attr(data-uncopyable-text);
+}
