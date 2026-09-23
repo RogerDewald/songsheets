@@ -6,7 +6,7 @@
   "license": "MIT",
   "scripts": {
     "test": "node --test",
-    "serve": "python -m http.server 8123",
+    "serve": "python tools/serve.py 8123",
     "sync-css": "node tools/sync-css.js"
   }
 }

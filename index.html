@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Songsheets</title>
+<meta name="description" content="Write chord song sheets, transpose them to any key and export them as PDF, Word, ChordPro, text or HTML. Runs entirely in your browser.">
+<meta name="theme-color" content="#1f45ff">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<script>
+  // Apply the saved theme before first paint, and add the web-app manifest only where it can load.
+  (function () {
+    try {
+      var s = JSON.parse(localStorage.getItem('songsheets:settings') || '{}');
+      if (s.theme === 'light' || s.theme === 'night') document.documentElement.setAttribute('data-theme', s.theme);
+    } catch (e) { /* storage unavailable */ }
+    if (/^https?:$/.test(location.protocol)) {
+      var l = document.createElement('link');
+      l.rel = 'manifest';
+      l.href = 'manifest.webmanifest';
+      document.head.appendChild(l);
+    }
+  })();
+</script>
+<link rel="stylesheet" href="css/themes.css">
+<link rel="stylesheet" href="css/sheet.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/print.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<div id="app"><noscript><p style="padding:2em">Songsheets needs JavaScript to run.</p></noscript></div>
+<div id="print-root" aria-hidden="true"></div>
+<div class="toast-region" role="status" aria-live="polite"></div>
+
+<!-- core engine (also used by the Node tests) -->
+<script src="js/core/normalize.js"></script>
+<script src="js/core/ids.js"></script>
+<script src="js/core/chords.js"></script>
+<script src="js/core/transpose.js"></script>
+<script src="js/core/parser.js"></script>
+<script src="js/core/sheetModel.js"></script>
+<script src="js/core/render.js"></script>
+<script src="js/core/search.js"></script>
+
+<!-- exports (jsPDF and docx are loaded from vendor/ only when first needed) -->
+<script src="js/export/util.js"></script>
+<script src="js/export/cssStrings.js"></script>
+<script src="js/export/textExport.js"></script>
+<script src="js/export/songbaseText.js"></script>
+<script src="js/export/chordpro.js"></script>
+<script src="js/export/backup.js"></script>
+<script src="js/export/htmlExport.js"></script>
+<script src="js/export/pdfText.js"></script>
+<script src="js/export/pdfLayout.js"></script>
+<script src="js/export/pdfExport.js"></script>
+<script src="js/export/docxModel.js"></script>
+<script src="js/export/docxExport.js"></script>
+<script src="js/export/download.js"></script>
+<script src="js/export/vendorLoader.js"></script>
+<script src="js/export/printRoute.js"></script>
+<script src="js/export/exportMenu.js"></script>
+
+<!-- app -->
+<script src="js/app/dom.js"></script>
+<script src="js/app/store.js"></script>
+<script src="js/app/storage.js"></script>
+<script src="js/app/router.js"></script>
+<script src="js/app/ui.js"></script>
+<script src="js/app/example.js"></script>
+<script src="js/app/views/sheetView.js"></script>
+<script src="js/app/views/library.js"></script>
+<script src="js/app/views/viewer.js"></script>
+<script src="js/app/views/editor.js"></script>
+<script src="js/app/views/sets.js"></script>
+<script src="js/app/views/settings.js"></script>
+<script src="js/app/main.js"></script>
+</body>
+</html>

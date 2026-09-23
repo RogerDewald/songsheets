@@ -5,6 +5,10 @@
  * its label is drawn by ::after { content: attr(data-uncopyable-text) }. Chords take no width,
  * never move the lyrics, and may overlap (space them by hand, e.g. [F#m  Bm]).
  */
+/* The technique needs content-box sizing (height + padding-top = chord band + text). */
+.lyrics, .lyrics *, .lyrics *::before, .lyrics *::after {
+  box-sizing: content-box;
+}
 .lyrics {
   --band: 1.2143em;
   --gutter: 1.7857em;
