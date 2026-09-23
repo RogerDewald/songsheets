@@ -126,3 +126,23 @@ test('store notifies subscribers with the patch', () => {
   assert.deepEqual(seen, [[2, { a: 2 }]]);
   assert.equal(s.get().a, 3);
 });
+
+test('two tabs: rebase keeps both sides\' edits and deletions', () => {
+  const base = { a: song('a'), b: song('b'), c: song('c') };
+  // this tab edited a and deleted c; the other tab added d and edited b
+  const local = { a: song('a', { title: 'A here', updatedAt: '2026-05-01T00:00:00.000Z' }), b: base.b };
+  const remote = { a: base.a, b: song('b', { title: 'B there', updatedAt: '2026-05-02T00:00:00.000Z' }), c: base.c, d: song('d') };
+  const out = St.rebaseMap(base, local, remote);
+  assert.deepEqual(Object.keys(out).sort(), ['a', 'b', 'd']);
+  assert.equal(out.a.title, 'A here');
+  assert.equal(out.b.title, 'B there');
+  // both edited the same song: the newer one wins
+  const both = St.rebaseMap({ a: base.a }, { a: song('a', { title: 'mine', updatedAt: '2026-05-01T00:00:00.000Z' }) },
+    { a: song('a', { title: 'theirs', updatedAt: '2026-06-01T00:00:00.000Z' }) });
+  assert.equal(both.a.title, 'theirs');
+  // deleted here, but edited later elsewhere: keep it
+  const kept = St.rebaseMap({ a: base.a }, {}, { a: song('a', { title: 'edited', updatedAt: '2026-06-01T00:00:00.000Z' }) });
+  assert.equal(kept.a.title, 'edited');
+  // nothing changed here: the stored copy wins entirely (including its deletions)
+  assert.deepEqual(St.rebaseMap(base, base, { a: base.a }), { a: base.a });
+});

@@ -162,7 +162,6 @@
     return {
       el: el,
       title: 'Library',
-      focus: function () { if (!('ontouchstart' in root)) search.focus(); },
       onKey: function (e) {
         if (e.key === '/' && !D.isTyping(e)) { e.preventDefault(); search.focus(); search.select(); return true; }
         if (e.key === 'Escape' && e.target === search && search.value) { search.value = ''; query = ''; renderList(); syncUrl(); return true; }

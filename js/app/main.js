@@ -21,6 +21,30 @@
 
   var saveTimer = null;
   var savePending = false;
+  // What this tab last read from or wrote to storage. Another tab (or another copy of the app on
+  // file://, which shares the key) may write in between; its changes are merged, never overwritten.
+  var lastRaw = readRaw();
+  var lastBase = { songs: loaded.songs, sets: loaded.sets };
+
+  function readRaw() {
+    if (!ls) return null;
+    try { return ls.getItem(S.storage.DATA_KEY); } catch (e) { return null; }
+  }
+
+  /** Merge a newer stored copy into this tab's state. Returns true if the state changed. */
+  function syncFromStorage(raw) {
+    if (dataLocked || raw === lastRaw) return false;
+    var remote;
+    try { remote = raw ? S.storage.migrate(JSON.parse(raw)) : { songs: {}, sets: {} }; } catch (e) { return false; }
+    var st = store.get();
+    var merged = S.storage.rebaseData(lastBase, { songs: st.songs, sets: st.sets }, remote);
+    lastRaw = raw;
+    lastBase = { songs: remote.songs, sets: remote.sets };
+    var changed = JSON.stringify(merged.songs) !== JSON.stringify(st.songs) || JSON.stringify(merged.sets) !== JSON.stringify(st.sets);
+    if (changed) { syncing = true; store.set({ songs: merged.songs, sets: merged.sets }); syncing = false; }
+    return changed;
+  }
+  var syncing = false;
   var lockWarned = false;
   var quotaToastClose = null;
 
@@ -35,8 +59,13 @@
       }
       return;
     }
+    syncFromStorage(readRaw());
     var st = store.get();
     var err = S.storage.saveData(ls, st.songs, st.sets);
+    if (!err) {
+      lastRaw = readRaw();
+      lastBase = { songs: st.songs, sets: st.sets };
+    }
     if (err) {
       store.set({ storageError: err });
       if (!quotaToastClose) {
@@ -59,6 +88,19 @@
     saveTimer = setTimeout(flushSave, 250);
   }
   var saveNow = flushSave;
+
+  root.addEventListener('storage', function (e) {
+    if (e.storageArea && e.storageArea !== ls) return;
+    if (e.key === S.storage.DATA_KEY) {
+      if (syncFromStorage(e.newValue) && savePending) scheduleSave();
+    } else if (e.key === S.storage.SETTINGS_KEY && e.newValue) {
+      try {
+        var next = S.storage.normalizeSettings(JSON.parse(e.newValue));
+        store.set({ settings: next });
+        applyTheme(next.theme);
+      } catch (err) { /* ignore */ }
+    }
+  });
 
   root.addEventListener('pagehide', saveNow);
   root.addEventListener('beforeunload', saveNow);
@@ -314,6 +356,14 @@
 
     copyText: copyText,
 
+    /** Write pending changes now. Returns {ok, message}. */
+    flush: function () {
+      if (saveTimer || savePending) { savePending = true; flushSave(); }
+      if (dataLocked) return { ok: false, message: 'not saved: the stored library could not be read' };
+      var err = store.get().storageError;
+      return err ? { ok: false, message: err.quota ? 'not saved: storage is full' : 'not saved: ' + err.message } : { ok: true, message: '' };
+    },
+
     runExport: function (kind, getSheets, extra, action) {
       var E = S.export && S.export.exportMenu;
       if (!E) { ui.toast('Exports are not available: the export modules did not load.', { type: 'error' }); return Promise.resolve(); }
@@ -363,6 +413,8 @@
 
     resetApp: function () {
       S.storage.clearAll(ls);
+      lastRaw = null;
+      lastBase = { songs: {}, sets: {} };
       dataLocked = false;
       loaded.raw = null;
       context.rawData = null;
@@ -434,13 +486,16 @@
     if (view.focus) view.focus(); else main.focus({ preventScroll: true });
   }
 
+  var skip = doc.querySelector('.skip-link');
+  if (skip) skip.addEventListener('click', function (e) { e.preventDefault(); main.focus(); });
+
   var router = S.router.createRouter(show);
   context.router = router;
 
   // keyboard shortcuts
   doc.addEventListener('keydown', function (e) {
     if (e.defaultPrevented) return;
-    if (doc.querySelector('dialog[open]')) return;
+    if (doc.querySelector('dialog[open]') || doc.querySelector('.menu')) return;
     if (current && current.onKey && current.onKey(e)) { e.preventDefault(); return; }
     if (D.isTyping(e) || e.ctrlKey || e.metaKey || e.altKey) return;
     if (e.key === 'n' || e.key === 'N') { e.preventDefault(); router.navigate('/new'); }
@@ -463,7 +518,7 @@
   });
 
   store.subscribe(function (st, patch) {
-    if (patch.songs || patch.sets) scheduleSave();
+    if ((patch.songs || patch.sets) && !syncing) scheduleSave();
   });
 
   applyTheme(store.get().settings.theme);
@@ -489,8 +544,9 @@
         });
       }).catch(function () { /* offline support is optional */ });
       var reloading = false;
+      var hadController = !!navigator.serviceWorker.controller;
       navigator.serviceWorker.addEventListener('controllerchange', function () {
-        if (reloading) return;
+        if (reloading || !hadController) return;
         reloading = true;
         root.location.reload();
       });

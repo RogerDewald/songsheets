@@ -89,7 +89,7 @@
             ' by Regan Ryan (MIT licence). PDF export uses jsPDF and Word export uses docx (both MIT).')));
     }
     render();
-    var unsub = ctx.store.subscribe(function (st, p) { if (p.settings || p.songs || p.sets) render(); });
+    var unsub = ctx.store.subscribe(function (st, p) { if (p.settings || p.songs || p.sets) D.keepFocus(body, render); });
     var el = h('section', { class: 'view view-settings' },
       h('div', { class: 'toolbar' }, h('div', { class: 'toolbar-row' }, h('h1', { class: 'view-title' }, 'Settings'))), body);
     return { el: el, title: 'Settings', destroy: unsub };

@@ -231,6 +231,36 @@
     return { songs: songs, sets: sets, stats: stats };
   }
 
+  /** Three-way merge for two tabs sharing one localStorage blob.
+   *  base = what this tab last read or wrote, local = this tab's state now, remote = what is stored now.
+   *  Starts from remote and re-applies this tab's own edits and deletions since base.
+   *  When both sides changed the same record, the newer updatedAt wins. Works on {id: record} maps. */
+  function rebaseMap(base, local, remote) {
+    base = base || {}; local = local || {}; remote = remote || {};
+    var out = Object.assign({}, remote);
+    var same = function (a, b) { return a === b || JSON.stringify(a) === JSON.stringify(b); };
+    Object.keys(local).forEach(function (id) {
+      if (base[id] && same(local[id], base[id])) return;             // unchanged here: remote wins
+      var r = remote[id];
+      if (r && base[id] && !same(r, base[id]) && newer(r.updatedAt, local[id].updatedAt)) return;   // both changed, remote newer
+      out[id] = local[id];
+    });
+    Object.keys(base).forEach(function (id) {
+      if (local[id]) return;                                          // not deleted here
+      var r = remote[id];
+      if (r && !same(r, base[id]) && newer(r.updatedAt, base[id].updatedAt)) return;   // edited elsewhere after: keep it
+      delete out[id];
+    });
+    return out;
+  }
+
+  function rebaseData(base, local, remote) {
+    return {
+      songs: rebaseMap(base.songs, local.songs, remote.songs),
+      sets: rebaseMap(base.sets, local.sets, remote.sets)
+    };
+  }
+
   function describeStats(stats) {
     var parts = [];
     if (stats.added) parts.push(stats.added + ' song' + (stats.added === 1 ? '' : 's') + ' added');
@@ -260,6 +290,8 @@
     clearAll: clearAll,
     usageBytes: usageBytes,
     mergeData: mergeData,
+    rebaseMap: rebaseMap,
+    rebaseData: rebaseData,
     describeStats: describeStats
   };
   root.SongSheets = root.SongSheets || {};

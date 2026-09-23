@@ -109,6 +109,8 @@ test('transposeText rewrites only bracket contents', () => {
   assert.ok(onlySecond.includes('[Eb]Morning'));
   const keyed = M.transposeText('# Key: G\n[G]a [C]b', { semitones: 2, updateKeyComment: true });
   assert.equal(keyed, '# Key: A\n[A]a [D]b');
+  const notKey = M.transposeText('# Key change for the last verse\n# Key: G\n[G]a', { semitones: 2, updateKeyComment: true });
+  assert.equal(notKey, '# Key change for the last verse\n# Key: A\n[A]a');
 });
 
 test('example fixture golden HTML', () => {

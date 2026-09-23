@@ -99,7 +99,8 @@
       dirty = false;
       var st = ctx.store.get();
       lastSavedAt = st.songs[id] && st.songs[id].updatedAt;
-      if (st.storageError) setStatus('Not saved: ' + st.storageError.message, 'error');
+      var r = ctx.actions.flush ? ctx.actions.flush() : { ok: true };
+      if (!r.ok) setStatus('Changes ' + r.message, 'error');
       else setStatus('Saved ' + D.formatDate(lastSavedAt), 'ok');
     }
 
@@ -220,7 +221,7 @@
         insertText('[]');
         var p = ta.selectionStart - 1;
         ta.setSelectionRange(p, p);
-      } else if (/^[a-g]$/.test(e.data) && /\[[^\]\n]*$/.test(before) && !/[A-Za-z]$/.test(before)) {
+      } else if (/^[a-g]$/.test(e.data) && /\[[^\]\n]*$/.test(before) && /[\[\s\/,\-]$/.test(before)) {
         e.preventDefault();
         insertText(e.data.toUpperCase());
       }
@@ -308,8 +309,10 @@
         helpPanel));
 
     function onUnload() { save(); }
+    function onHidden() { if (root.document.visibilityState === 'hidden') save(); }
     root.addEventListener('beforeunload', onUnload);
     root.addEventListener('pagehide', onUnload);
+    root.document.addEventListener('visibilitychange', onHidden);
 
     if (isNew && route.query.help === '1') toggleHelp(true);
     renderPreview();
@@ -328,6 +331,7 @@
         save();
         root.removeEventListener('beforeunload', onUnload);
         root.removeEventListener('pagehide', onUnload);
+        root.document.removeEventListener('visibilitychange', onHidden);
       }
     };
   };

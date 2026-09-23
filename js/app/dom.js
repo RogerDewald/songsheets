@@ -156,6 +156,33 @@
     return el;
   }
 
+  /** Identify a focused control well enough to find its replacement after a re-render. */
+  function focusKey(el, container) {
+    if (!el || el === doc.body || !container.contains(el)) return null;
+    var row = el.closest ? el.closest('[data-index]') : null;
+    return [
+      el.tagName,
+      row && container.contains(row) ? row.getAttribute('data-index') : '',
+      el.getAttribute('aria-label') || el.getAttribute('title') || '',
+      el.name || '',
+      el.type === 'radio' || el.type === 'checkbox' ? el.value : '',
+      el.tagName === 'BUTTON' || el.tagName === 'A' ? el.textContent : '',
+      el.closest && el.closest('label') ? el.closest('label').textContent : ''
+    ].join('\u0001');
+  }
+
+  /** Run a re-render of container and put focus back on the equivalent control. */
+  function keepFocus(container, render) {
+    var key = focusKey(doc.activeElement, container);
+    render();
+    if (!key) return;
+    var tag = key.split('\u0001')[0];
+    var all = container.querySelectorAll(tag);
+    for (var i = 0; i < all.length; i++) {
+      if (focusKey(all[i], container) === key && !all[i].disabled) { all[i].focus(); return; }
+    }
+  }
+
   function isTyping(e) {
     var t = e.target;
     if (!t || !t.tagName) return false;
@@ -185,6 +212,7 @@
     button: button,
     select: select,
     isTyping: isTyping,
+    keepFocus: keepFocus,
     formatDate: formatDate
   };
 })(typeof globalThis !== 'undefined' ? globalThis : this);

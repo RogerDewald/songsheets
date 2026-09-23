@@ -220,7 +220,9 @@
     var ast = P.parse(text);
     var pieces = text.split(/(\r\n|\r|\n|\u2028|\u2029)/);    // odd indexes are the separators
     var tuneOfLine = [];
+    var keyLines = {};
     ast.tunes.forEach(function (t) {
+      t.blocks.forEach(function (b) { if (b.kind === 'key') keyLines[b.line] = true; });
       for (var i = t.lineStart; i < t.lineEnd; i++) tuneOfLine[i] = t.index;
       if (t.titleLine !== null) tuneOfLine[t.titleLine] = -1;
     });
@@ -237,7 +239,7 @@
       if (typeof opts.tuneIndex === 'number' && opts.tuneIndex !== ti) continue;
       var m = mappers[ti];
       var s = pieces[p];
-      if (opts.updateKeyComment && /^#\s?[Kk][Ee][Yy]\b/.test(s) && m.key) {
+      if (opts.updateKeyComment && keyLines[line] && m.key) {
         pieces[p] = s.replace(/^(#\s?[Kk][Ee][Yy]\s*[:=]?\s*).*$/, '$1' + T.keyLabel(m.key, semis, acc));
         continue;
       }

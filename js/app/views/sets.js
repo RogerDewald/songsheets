@@ -55,7 +55,7 @@
       body.appendChild(list);
     }
     render();
-    var unsub = ctx.store.subscribe(function (st, p) { if (p.sets || p.songs) render(); });
+    var unsub = ctx.store.subscribe(function (st, p) { if (p.sets || p.songs) D.keepFocus(el, render); });
     return { el: el, title: 'Set lists', destroy: unsub };
   };
 
@@ -249,7 +249,7 @@
     render();
     var unsub = ctx.store.subscribe(function (st, p) {
       if (!st.sets[id]) { ctx.router.navigate('/sets', { replace: true }); return; }
-      if (p.sets || p.songs || p.settings) render();
+      if (p.sets || p.songs || p.settings) D.keepFocus(el, render);
     });
     return { el: el, title: set().name, destroy: unsub, focus: function () { if (!set().items.length) addInput.focus(); } };
   };
