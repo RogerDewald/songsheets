@@ -1,0 +1,2 @@
+# Vendored files must stay byte-identical to their recorded SHA-256 (tests/export/vendor.test.js).
+* -text

@@ -295,5 +295,6 @@ body.drop-target::after {
 .toast-close { color: inherit; border: 0; background: transparent; width: 28px; min-width: 28px; min-height: 28px; }
 .toast-error { background: var(--danger); color: #fff; }
 .toast-ok { background: var(--text); }
+.toast-warning { background: #b26a00; color: #fff; }
 @keyframes toast-in { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .toast { animation: none; } }

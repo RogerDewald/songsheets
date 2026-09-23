@@ -1,0 +1,134 @@
+/* Songsheets — print and export document styles.
+ * Loaded for every medium. On screen it only hides #print-root; the .print-* rules style the
+ * document printRoute.js builds (inside #print-root when printing, or as the body of a standalone
+ * HTML export). The @page size and margins are injected at print time: @page cannot use var().
+ */
+@media screen {
+  #print-root { display: none; }
+}
+
+.print-document {
+  font-family: verdana, arial, helvetica, sans-serif;
+  line-height: 1.4;
+  text-align: left;
+}
+.print-toc-title,
+.print-header .print-title {
+  font-size: 1.5em;
+  font-weight: bold;
+  line-height: 1.2;
+  margin: 0 0 0.2em;
+  color: var(--title, #333);
+}
+.print-header {
+  margin: 0 0 1em;
+}
+.print-header .print-meta,
+.print-header .print-tune {
+  margin: 0;
+  font-size: 0.85em;
+  color: var(--muted, #666);
+}
+.print-sheet .lyrics {
+  display: block;
+  margin-left: 2em;
+}
+.print-sheet .transpose-preset {
+  cursor: default;
+}
+/* An active capo preset means the chords already sound as shown: there is no capo to fit. */
+.print-sheet .transpose-preset.active {
+  display: none;
+}
+.print-toc ol {
+  margin: 0 0 1em;
+  padding-left: 2em;
+}
+.print-toc li {
+  margin: 0 0 0.3em;
+}
+.print-toc .toc-meta {
+  margin-left: 0.5em;
+  font-size: 0.85em;
+  color: var(--muted, #666);
+}
+.print-toc a {
+  color: inherit;
+  text-decoration: none;
+}
+
+@media print {
+  html, body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  /* App chrome never prints (this also covers Ctrl+P from a song view). */
+  .app-header, .toolbar, [role="toolbar"], .toast-region, .skip-link, dialog, .no-print {
+    display: none !important;
+  }
+  /* Printing through printRoute.js: only the print document. */
+  html.ss-printing #app { display: none !important; }
+  html.ss-printing #print-root { display: block !important; }
+  html:not(.ss-printing) #print-root { display: none !important; }
+
+  .print-document {
+    font-size: var(--print-font-size, 11pt);
+    color: #000;
+  }
+  .print-document .lyrics {
+    --comment-color: #666;
+    color: #000;
+  }
+  .print-document .print-title,
+  .print-document .print-toc-title {
+    color: #000;
+  }
+  .print-document .print-meta,
+  .print-document .print-tune,
+  .print-document .toc-meta {
+    color: #444;
+  }
+  .print-sheet + .print-sheet {
+    break-before: page;
+    page-break-before: always;
+  }
+  .print-toc {
+    break-after: page;
+    page-break-after: always;
+  }
+  .print-header {
+    break-after: avoid;
+    page-break-after: avoid;
+    break-inside: avoid;
+  }
+  .stanza, .chorus, .line, .comment {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  /* A block taller than a page (marked by printRoute) splits, keeping two lines together at each end. */
+  .print-document .print-splittable {
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+  .print-splittable > .line:first-child,
+  .print-splittable > .stanza-number + .line,
+  .print-splittable > .line:nth-last-child(2) {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+  .chord, .comment, .transpose-preset, .stanza-number, .print-meta {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .print-document .lyrics .chord-word .chord {
+    color: var(--print-chord-color, #1f45ff);
+  }
+  .print-document.print-bw .lyrics .chord-word .chord {
+    color: #000;
+    font-weight: bold;
+  }
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+}

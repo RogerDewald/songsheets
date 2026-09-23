@@ -1,0 +1,60 @@
+# Long stanza test: stanza 2 is taller than a page
+
+1
+[D]Walking down the [G]long road [D]home,
+The [Bm]evening sky is [A]wide and [D]still;
+[D]Every step a [G]quiet [D]psalm,
+The [G]lantern [A]burning on the [D]hill.
+
+2
+[D]By the river we [G]walk along, line 1
+[Bm]By the meadow we [A]walk along, line 2
+[G]By the harbour we [D]walk along, line 3
+[Em]By the valley we [A7]walk along, line 4
+[D]By the mountain we [G]walk along, line 5
+[Bm]By the orchard we [A]walk along, line 6
+[G]By the village we [D]walk along, line 7
+[Em]By the morning we [A7]walk along, line 8
+[D]By the river we [G]walk along, line 9
+[Bm]By the meadow we [A]walk along, line 10
+[G]This line is deliberately long so that it has to wrap onto a second row on the page, with the [D]chord moving together with its syllable
+[Em]By the valley we [A7]walk along, line 12
+[D]By the mountain we [G]walk along, line 13
+[Bm]By the orchard we [A]walk along, line 14
+[G]By the village we [D]walk along, line 15
+[Em]By the morning we [A7]walk along, line 16
+[D]By the river we [G]walk along, line 17
+[Bm]By the meadow we [A]walk along, line 18
+[G]By the harbour we [D]walk along, line 19
+[Em]By the valley we [A7]walk along, line 20
+Past the **mountain** and the *quiet* [D]stream, [G]line 21
+[Bm]By the orchard we [A]walk along, line 22
+[G]By the village we [D]walk along, line 23
+[Em]By the morning we [A7]walk along, line 24
+[D]By the river we [G]walk along, line 25
+[Bm]By the meadow we [A]walk along, line 26
+[G]By the harbour we [D]walk along, line 27
+[Em]By the valley we [A7]walk along, line 28
+[D]By the mountain we [G]walk along, line 29
+[Bm]By the orchard we [A]walk along, line 30
+[G]By the village we [D]walk along, line 31
+[Em]By the morning we [A7]walk along, line 32
+[D]By the river we [G]walk along, line 33
+[Bm]By the meadow we [A]walk along, line 34
+[G]By the harbour we [D]walk along, line 35
+[Em]By the valley we [A7]walk along, line 36
+[D]By the mountain we [G]walk along, line 37
+[Bm]By the orchard we [A]walk along, line 38
+[G]By the village we [D]walk along, line 39
+[Em]By the morning we [A7]walk along, line 40
+[D]By the river we [G]walk along, line 41
+[Bm]By the meadow we [A]walk along, line 42
+[G]By the harbour we [D]walk along, line 43
+[Em]By the valley we [A7]walk along, line 44
+
+  [G]Home, [D]home, the [A]long road [D]home,
+  [G]Carry me [A]on to [D]home.
+
+3
+[D]When the journey's [G]done at [D]last,
+[Bm]All the [A]miles are [D]past.

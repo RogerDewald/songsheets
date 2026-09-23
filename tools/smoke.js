@@ -128,7 +128,8 @@ function check(name, ok, detail) {
     const pdf = await evaluate(`(async () => {
       const st = SongSheets.app.store.get();
       const sheets = [SongSheets.sheetModel.buildSheet(st.songs[${JSON.stringify(id)}], {})];
-      const r = await SongSheets.export.pdfExport.exportPdf(sheets, { pageSize: 'A4' });
+      const lib = await SongSheets.export.vendorLoader.loadVendor('jspdf');
+      const r = await SongSheets.export.pdfExport.exportPdf(sheets, { pageSize: 'A4' }, lib);
       const blob = r && r.blob ? r.blob : r;
       const head = new TextDecoder().decode(new Uint8Array(await blob.slice(0, 5).arrayBuffer()));
       return { head, size: blob.size, type: blob.type };
@@ -137,7 +138,8 @@ function check(name, ok, detail) {
     const docx = await evaluate(`(async () => {
       const st = SongSheets.app.store.get();
       const sheets = [SongSheets.sheetModel.buildSheet(st.songs[${JSON.stringify(id)}], {})];
-      const r = await SongSheets.export.docxExport.exportDocx(sheets, { pageSize: 'A4' });
+      const lib = await SongSheets.export.vendorLoader.loadVendor('docx');
+      const r = await SongSheets.export.docxExport.exportDocx(sheets, { pageSize: 'A4' }, lib);
       const blob = r && r.blob ? r.blob : r;
       const head = new TextDecoder().decode(new Uint8Array(await blob.slice(0, 2).arrayBuffer()));
       return { head, size: blob.size };

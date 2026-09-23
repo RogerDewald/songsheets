@@ -1,0 +1,41 @@
+{
+  "songs": [
+    {
+      "id": 1246,
+      "title": "Grace Upon Grace",
+      "lang": "english",
+      "lyrics": "1\r\n[G]Grace upon [C]grace,\r\nMercy an[D]ew\r\n\r\n  [C]Holy, [G]holy",
+      "language_links": [
+        4784,
+        2509
+      ]
+    },
+    {
+      "id": 77,
+      "title": "Canción",
+      "lang": "Español ",
+      "lyrics": "# Capo 2\n\n1\n[A]Él es [D]mi can_ción",
+      "language_links": []
+    }
+  ],
+  "books": [
+    {
+      "id": 3,
+      "name": "Evening Book",
+      "slug": "evening",
+      "songs": {
+        "1246": "2",
+        "999": "1",
+        "77": "0"
+      },
+      "languages": [
+        "english"
+      ]
+    }
+  ],
+  "destroyed": {
+    "songs": [],
+    "books": []
+  },
+  "songCount": 2
+}
