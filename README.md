@@ -12,9 +12,10 @@ songbase pastes into Songsheets unchanged, and the other way round.
 **Try it:** <https://rogerdewald.github.io/songsheets/>
 
 <p align="center">
-  <img src="docs/screenshot-song.png" width="260" alt="A song on a phone: chords in blue sit above the lyrics, with a compact toolbar for chords, key and more">
-  <img src="docs/screenshot-library.png" width="260" alt="The song library on a phone, with search, tags and favourites">
-  <img src="docs/screenshot-editor.png" width="260" alt="Editing a song on a phone: the text uses [chord] brackets inline">
+  <img src="docs/screenshot-song.png" width="200" alt="A song on a phone: chords in blue sit above the lyrics, with a compact toolbar for chords, key and more">
+  <img src="docs/screenshot-song-dark.png" width="200" alt="The same song in dark mode: white lyrics and grey chords on black">
+  <img src="docs/screenshot-library.png" width="200" alt="The song library on a phone, with search, tags and favourites">
+  <img src="docs/screenshot-editor.png" width="200" alt="Editing a song on a phone: the text uses [chord] brackets inline">
 </p>
 
 ## Running it

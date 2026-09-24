@@ -3,7 +3,7 @@
  * DevTools protocol (no dependencies). Needs Node 22+ and Chrome or Edge, and a running server:
  *   python tools/serve.py            (in another terminal)
  *   node tools/screenshots.js [http://localhost:8123/]
- * Writes docs/screenshot-library.png, docs/screenshot-song.png and docs/screenshot-editor.png. */
+ * Writes docs/screenshot-library.png, -song.png, -song-dark.png and -editor.png. */
 'use strict';
 const { spawn } = require('node:child_process');
 const fs = require('node:fs');
@@ -82,7 +82,7 @@ async function shot(name) {
   await waitFor('!!(window.SongSheets && SongSheets.app)');
   await evaluate(`(() => {
     const A = SongSheets.app.actions;
-    A.updateSettings({ theme: 'light', fontScale: 1, showChords: true, lastBackupAt: new Date().toISOString(), installHintDismissed: true });
+    A.updateSettings({ theme: 'auto', fontScale: 1, showChords: true, lastBackupAt: new Date().toISOString(), installHintDismissed: true });
     A.loadExamples();
     SongSheets.app.saveNow();
     return 1;
@@ -98,6 +98,13 @@ async function shot(name) {
   await waitFor("!!document.querySelector('.sheet-column .chord-word')");
   await evaluate("window.scrollTo(0, 0), document.querySelectorAll('.toast').forEach(t => t.remove()), 1");
   await shot('song');
+
+  // the same song with the phone in dark mode ("Match my device" theme)
+  await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: 'dark' }] });
+  await waitFor("getComputedStyle(document.body).backgroundColor === 'rgb(0, 0, 0)'");
+  await shot('song-dark');
+  await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: 'light' }] });
+  await waitFor("getComputedStyle(document.body).backgroundColor === 'rgb(255, 255, 255)'");
 
   const ag = await evaluate("Object.values(SongSheets.app.store.get().songs).find(s => s.title === 'Amazing Grace').id");
   await evaluate('location.hash = ' + JSON.stringify('#/edit/' + ag) + ', 1');
