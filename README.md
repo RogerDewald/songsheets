@@ -9,6 +9,14 @@ The song format, the way chords sit over the lyrics, and the transposition table
 [songbase](https://github.com/ReganRyanNZ/songbase) by Regan Ryan (MIT licence). Text copied from
 songbase pastes into Songsheets unchanged, and the other way round.
 
+**Try it:** <https://rogerdewald.github.io/songsheets/>
+
+<p align="center">
+  <img src="docs/screenshot-song.png" width="260" alt="A song on a phone: chords in blue sit above the lyrics, with a compact toolbar for chords, key and more">
+  <img src="docs/screenshot-library.png" width="260" alt="The song library on a phone, with search, tags and favourites">
+  <img src="docs/screenshot-editor.png" width="260" alt="Editing a song on a phone: the text uses [chord] brackets inline">
+</p>
+
 ## Running it
 
 - **No install:** double-click `index.html`. Everything except offline caching works from a file.
@@ -127,6 +135,8 @@ installed copies pick up the new version.
 - `node tools/sync-css.js` regenerates `js/export/cssStrings.js` after editing a stylesheet. The
   stand-alone HTML export embeds the CSS, because a page opened from a file cannot fetch it.
 - `node tools/make-icons.js` redraws the icons, and `node tools/bump-version.js` sets the version.
+- `node tools/screenshots.js` retakes the phone screenshots in `docs/` (start `python tools/serve.py` first).
+- `node tools/smoke.js [url]` runs an end-to-end check in headless Chrome (file:// by default).
 
 Layout: `js/core` is the engine and runs in Node too (parser, chords, transpose, sheet model,
 render, search). `js/app` holds the user interface, `js/export` the exporters, and `vendor` the
