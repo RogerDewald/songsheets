@@ -141,6 +141,6 @@ test('source files contain no raw invisible characters', () => {
   const root = path.join(__dirname, '..', '..');
   const files = walk(path.join(root, 'js')).concat(walk(path.join(root, 'tests')), walk(path.join(root, 'tools')));
   assert.ok(files.length > 5);
-  const bad = /[\u2028\u2029\ufeff\u00a0\u200b-\u200d\u0300-\u036f]/;
+  const bad = /[\u2028\u2029\ufeff\u00a0\u200b-\u200d\u0300-\u036f\x00-\x08\x0b\x0c\x0e-\x1f]/;
   for (const f of files) assert.ok(!bad.test(fs.readFileSync(f, 'utf8')), f + ' has a raw invisible character; run python tools/fix-escapes.py');
 });

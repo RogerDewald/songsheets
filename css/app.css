@@ -138,13 +138,22 @@ body.drop-target::after {
   background: color-mix(in srgb, var(--background) 88%, transparent); pointer-events: none;
 }
 
+.notice {
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border)); background: color-mix(in srgb, var(--accent) 7%, var(--background));
+  border-radius: 12px; padding: 10px 14px; margin: 0 0 12px;
+}
+.notice p { margin: 0 0 8px; }
+.notice-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
 /* ---- song sheet view ------------------------------------------------------------------------- */
 .sheet-toolbar {
   position: sticky; top: 0; z-index: 5;
   display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px;
   padding: 8px 0; margin-bottom: 8px;
   background: var(--background); border-bottom: 1px solid var(--border);
+  transition: transform 0.2s ease;
 }
+.btn-more { display: none; }
 .ctl-group { display: inline-flex; align-items: center; gap: 4px; }
 .ctl-extra { margin-left: auto; flex-wrap: wrap; }
 .transpose-group .select { min-width: 7.5em; }
@@ -155,10 +164,25 @@ body.drop-target::after {
 .sheet-column { display: block; text-align: center; }
 .sheet-column .lyrics { text-align: left; max-width: 100%; }
 @media (max-width: 499px) {
-  .sheet-toolbar { gap: 6px 8px; }
   .btn-label { display: none; }
+}
+/* Phones: one row of essentials (chords, key); everything else behind "More". The row slides away
+   while scrolling down a song and returns on scrolling up. */
+@media (max-width: 640px) {
+  .sheet-toolbar { gap: 6px; flex-wrap: nowrap; padding: 6px 0; }
+  .sheet-toolbar.show-more { flex-wrap: wrap; }
+  .sheet-toolbar.is-tucked { transform: translateY(calc(-100% - 2px)); }
+  .sheet-toolbar:not(.show-more) .ctl-secondary { display: none; }
+  .sheet-toolbar .btn-more { display: inline-flex; }
+  .sheet-toolbar .ctl-more { margin-left: auto; order: 1; }
+  .sheet-toolbar.show-more .ctl-secondary { order: 2; }
+  .sheet-toolbar.show-more .ctl-extra { width: 100%; margin-left: 0; }
+  .transpose-group { flex: 1 1 auto; min-width: 0; }
+  .transpose-group .select { min-width: 0; flex: 1 1 auto; width: 100%; }
+  .transpose-group .btn-reset { display: none; }
   .ctl-extra { margin-left: 0; }
 }
+@media (prefers-reduced-motion: reduce) { .sheet-toolbar { transition: none; } }
 
 /* ---- editor ---------------------------------------------------------------------------------- */
 .editor-toolbar .toolbar-row { flex-wrap: wrap; }
@@ -175,7 +199,7 @@ body.drop-target::after {
 .snippet-bar .check { margin-left: auto; color: var(--muted); }
 .lyrics-input {
   min-height: 60vh; resize: vertical; line-height: 1.5; tab-size: 2;
-  font-family: ui-monospace, Consolas, "Courier New", monospace; font-size: 0.95rem; white-space: pre; overflow-wrap: normal; overflow-x: auto;
+  font-family: ui-monospace, Consolas, "Courier New", monospace; font-size: 0.95rem; white-space: pre-wrap; overflow-wrap: anywhere;
 }
 .pane-preview { border: 1px solid var(--border); border-radius: 10px; padding: 0 12px 16px; position: sticky; top: 8px; max-height: calc(100vh - 16px); overflow: auto; }
 .preview-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--background); z-index: 2; }
@@ -298,3 +322,25 @@ body.drop-target::after {
 .toast-warning { background: #b26a00; color: #fff; }
 @keyframes toast-in { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .toast { animation: none; } }
+
+/* ---- touch screens ----------------------------------------------------------------------------
+   Fields use 16px text so iPhone Safari does not zoom in when one is tapped, and controls get
+   finger-sized hit areas (about 44px). */
+@media (pointer: coarse), (max-width: 640px) {
+  .input, .select, .lyrics-input, .mini-field .select, .typeahead-item { font-size: 16px; }
+  .btn { min-height: 44px; }
+  .btn-icon { width: 44px; min-width: 44px; }
+  .btn-small { min-height: 40px; padding: 6px 12px; }
+  .input:not(textarea), .select { min-height: 44px; }
+  .mini-field .select { min-height: 40px; }
+  .chip { min-height: 38px; padding: 6px 14px; }
+  .nav-link { min-height: 44px; min-width: 44px; justify-content: center; }
+  .menu-item { padding: 12px 12px; }
+  .typeahead-item { padding: 12px 10px; }
+  .toast-close { width: 40px; min-width: 40px; min-height: 40px; }
+  input[type="checkbox"], input[type="radio"] { width: 22px; height: 22px; }
+  .check, .radio { min-height: 44px; }
+  .song-link, .set-link { padding-top: 12px; padding-bottom: 12px; }
+  .set-item-title { padding: 6px 0; }
+  .lyrics .transpose-preset { padding: 8px 0; }
+}

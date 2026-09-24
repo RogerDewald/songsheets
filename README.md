@@ -17,6 +17,21 @@ songbase pastes into Songsheets unchanged, and the other way round.
 - **Free hosting:** publish the folder with GitHub Pages (see below). The app then works offline
   after the first visit and can be installed as an app on phones and desktops.
 
+## Using it on a phone
+
+- Open the GitHub Pages address once, then add it to your home screen: **Share → Add to Home
+  Screen** on iPhone, or **menu → Install app / Add to Home screen** on Android. It then opens like
+  an app and works offline.
+- **iPhone:** Safari can delete data from websites you have not opened for 7 days. Apps added to
+  the home screen are exempt, so use Songsheets from the home-screen icon. The home-screen app has
+  its own storage, separate from Safari: tap **Back up** in Safari first, then **Import** the file in
+  the app.
+- Songsheets asks the browser to keep its storage ("persistent storage"), and reminds you to
+  download a backup when the last one is more than two weeks older than your changes.
+- On a phone the song toolbar is one row (chords, key, More) and slides away while you scroll down.
+  The screen stays on while a song is open; turn that off in Settings.
+- In a set list, swipe left or right to move between songs.
+
 ## Writing a song
 
 ```

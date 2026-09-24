@@ -50,7 +50,11 @@
               s.fontScale !== 1 ? D.button('Reset', function () { up({ fontScale: 1 }); }, { class: 'btn-small btn-ghost' }) : null)),
           h('label', { class: 'check setting' },
             h('input', { type: 'checkbox', checked: s.showChords, on: { change: function (e) { up({ showChords: e.target.checked }); } } }),
-            ' Show chords')),
+            ' Show chords'),
+          h('label', { class: 'check setting' },
+            h('input', { type: 'checkbox', checked: s.keepAwake !== false, on: { change: function (e) { up({ keepAwake: e.target.checked }); } } }),
+            ' Keep the screen on while a song is open'),
+          !('wakeLock' in navigator) ? h('p', { class: 'muted small' }, 'This browser cannot keep the screen on; change your phone’s auto-lock setting instead.') : null),
         section('Chords', 'Songs follow this unless you pick sharps or flats on the song itself.',
           h('div', { class: 'setting' }, h('span', { class: 'setting-label' }, 'Sharps and flats'),
             radioGroup('acc', [{ value: 'auto', label: 'Automatic (by key)' }, { value: 'sharp', label: 'Prefer sharps ♯' }, { value: 'flat', label: 'Prefer flats ♭' }], s.accidentals, function (v) { up({ accidentals: v }); })),
@@ -67,7 +71,17 @@
             h('input', { type: 'checkbox', checked: s.printBw, on: { change: function (e) { up({ printBw: e.target.checked }); } } }),
             ' Black and white (bold black chords)')),
         section('Your data', 'Songs are stored only in this browser (' + nSongs + ' song' + (nSongs === 1 ? '' : 's') + ', ' + nSets + ' set list' + (nSets === 1 ? '' : 's') + ', about ' + formatBytes(S.storage.usageBytes(ctx.ls)) + ' of roughly 5 MB). Clearing browser data deletes them, so download a backup now and then.',
+          (function () {
+            var info = ctx.actions.storageInfo ? ctx.actions.storageInfo() : { supported: false };
+            var lines = [];
+            lines.push('Last backup: ' + (s.lastBackupAt ? new Date(s.lastBackupAt).toLocaleString() : 'never') + '.');
+            if (info.persisted) lines.push('This browser has agreed to keep your songs even when space runs low.');
+            else if (info.platform === 'ios' && !info.standalone) lines.push('On iPhone and iPad, Safari can delete songs from sites you have not opened for 7 days. Add Songsheets to your Home Screen to keep them, and move your songs there with a backup.');
+            else lines.push('The browser may clear this storage if the device runs low on space. Installing the app makes that less likely.');
+            return h('p', { class: 'small' }, lines.join(' '));
+          })(),
           h('div', { class: 'button-row' },
+            ctx.store.get().installable ? D.button('Install app', function () { ctx.actions.install(); }, { icon: 'download' }) : null,
             D.button('Download backup', function () { ctx.actions.exportBackup(); }, { primary: true, icon: 'download' }),
             D.button('Restore from backup', function () { restoreInput.click(); }, { icon: 'upload' }),
             restoreInput),

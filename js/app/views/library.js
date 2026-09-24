@@ -41,6 +41,24 @@
     var list = h('ul', { class: 'song-list', role: 'list' });
     var countEl = h('p', { class: 'muted small list-count', 'aria-live': 'polite' });
     var body = h('div', { class: 'library-body' });
+    var hintSlot = h('div');
+
+    function renderHint() {
+      var hint = ctx.actions.installHint ? ctx.actions.installHint() : null;
+      D.clear(hintSlot);
+      if (!hint) return;
+      var text = hint.platform === 'ios'
+        ? ['Keep your songs safe: tap ', h('strong', null, 'Share'), ', then ', h('strong', null, 'Add to Home Screen'), ', and use Songsheets from there. ',
+          'Safari can delete songs from websites you have not opened for a week; the home-screen app keeps them. ',
+          'It has its own storage, so tap Back up here first and Import the file there.']
+        : ['Install Songsheets as an app so it opens offline and the browser is less likely to clear your songs.' + (hint.canPrompt ? '' : ' Use the browser menu, then Add to Home screen or Install app.')];
+      hintSlot.appendChild(h('div', { class: 'notice', role: 'note' },
+        h('p', null, text),
+        h('div', { class: 'notice-actions' },
+          hint.canPrompt ? D.button('Install', function () { ctx.actions.install().then(renderHint); }, { primary: true, icon: 'download' }) : null,
+          hint.platform === 'ios' ? D.button('Back up', function () { ctx.actions.exportBackup(); }, { icon: 'download' }) : null,
+          D.button('Dismiss', function () { ctx.actions.dismissInstallHint(); }, { class: 'btn-ghost' }))));
+    }
 
     var el = h('section', { class: 'view view-library' },
       h('div', { class: 'toolbar' },
@@ -52,6 +70,7 @@
           D.button('Import', function () { fileInput.click(); }, { icon: 'upload', title: 'Import JSON backup, ChordPro, text or exported HTML files' }),
           D.button('Back up', function () { ctx.actions.exportBackup(); }, { icon: 'download', title: 'Download a backup of all songs and sets' }),
           fileInput)),
+      hintSlot,
       tagsRow,
       countEl,
       body);
@@ -149,6 +168,7 @@
     }
 
     function renderAll() {
+      renderHint();
       var st = ctx.store.get();
       renderTags(Object.keys(st.songs).map(function (k) { return st.songs[k]; }));
       renderList();
@@ -156,7 +176,7 @@
 
     renderAll();
     var unsub = ctx.store.subscribe(function (st, patch) {
-      if (patch.songs || patch.settings) renderAll();
+      if (patch.songs || patch.settings || patch.installable !== undefined) renderAll();
     });
 
     return {

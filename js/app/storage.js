@@ -25,7 +25,11 @@
     chordColor: '#1f45ff',
     printBw: false,
     librarySort: 'title',     // 'title' | 'updated' | 'created'
-    editorShortcuts: true     // \ or $ inserts [], a-g inside [ is capitalised
+    editorShortcuts: true,    // \ or $ inserts [], a-g inside [ is capitalised
+    keepAwake: true,          // keep the screen on while a song is open
+    lastBackupAt: null,       // ISO time of the last backup download
+    backupReminderAt: null,   // ISO time the last backup reminder was shown
+    installHintDismissed: false
   };
 
   function str(v, d) { return typeof v === 'string' ? v : (d === undefined ? '' : d); }
@@ -85,6 +89,10 @@
     if (typeof s.printBw === 'boolean') out.printBw = s.printBw;
     if (['title', 'updated', 'created'].indexOf(s.librarySort) >= 0) out.librarySort = s.librarySort;
     if (typeof s.editorShortcuts === 'boolean') out.editorShortcuts = s.editorShortcuts;
+    if (typeof s.keepAwake === 'boolean') out.keepAwake = s.keepAwake;
+    if (typeof s.lastBackupAt === 'string' && !isNaN(Date.parse(s.lastBackupAt))) out.lastBackupAt = s.lastBackupAt;
+    if (typeof s.backupReminderAt === 'string' && !isNaN(Date.parse(s.backupReminderAt))) out.backupReminderAt = s.backupReminderAt;
+    if (typeof s.installHintDismissed === 'boolean') out.installHintDismissed = s.installHintDismissed;
     return out;
   }
 
@@ -261,6 +269,24 @@
     };
   }
 
+  var DAY = 24 * 60 * 60 * 1000;
+
+  /** Should the app remind the user to back up? Only when there is something to lose, the last
+   *  backup is older than every song edit and at least `days` old, and no reminder was shown today. */
+  function backupReminderDue(songs, settings, nowMs, days) {
+    days = days || 14;
+    var ids = Object.keys(songs || {});
+    if (!ids.length) return false;
+    var newest = 0;
+    ids.forEach(function (id) { var t = Date.parse(songs[id].updatedAt) || 0; if (t > newest) newest = t; });
+    var last = settings.lastBackupAt ? Date.parse(settings.lastBackupAt) : 0;
+    if (last && last >= newest) return false;                         // nothing changed since the backup
+    var oldest = last || Math.min.apply(null, ids.map(function (id) { return Date.parse(songs[id].createdAt) || nowMs; }));
+    if (nowMs - oldest < days * DAY) return false;
+    var shown = settings.backupReminderAt ? Date.parse(settings.backupReminderAt) : 0;
+    return nowMs - shown >= DAY;
+  }
+
   function describeStats(stats) {
     var parts = [];
     if (stats.added) parts.push(stats.added + ' song' + (stats.added === 1 ? '' : 's') + ' added');
@@ -292,6 +318,7 @@
     mergeData: mergeData,
     rebaseMap: rebaseMap,
     rebaseData: rebaseData,
+    backupReminderDue: backupReminderDue,
     describeStats: describeStats
   };
   root.SongSheets = root.SongSheets || {};

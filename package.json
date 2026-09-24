@@ -1,6 +1,6 @@
 {
   "name": "songsheets",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Create, transpose and export chord song sheets in the browser. No server.",
   "private": true,
   "license": "MIT",

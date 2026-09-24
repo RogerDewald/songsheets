@@ -6,7 +6,7 @@
   var h = D.h;
   var ui = S.ui;
   var doc = root.document;
-  var APP_VERSION = '1.0.0';
+  var APP_VERSION = '1.1.0';
 
   // ---- state and persistence ------------------------------------------------------------------
   var ls = S.storage.getLocalStorage();
@@ -114,6 +114,30 @@
     if (meta) meta.setAttribute('content', theme === 'night' ? '#000000' : '#1f45ff');
   }
 
+  // ---- storage protection and installing ------------------------------------------------------
+  var persistState = { supported: !!(navigator.storage && navigator.storage.persist), persisted: false };
+  function checkPersisted() {
+    if (!persistState.supported || !navigator.storage.persisted) return Promise.resolve(false);
+    return navigator.storage.persisted().then(function (p) { persistState.persisted = p; return p; }, function () { return false; });
+  }
+  /** Ask the browser not to clear our storage under pressure. Chrome decides silently (installed apps
+   *  and often-used sites get it); Firefox may ask. Only asked once there are songs worth keeping. */
+  function requestPersist() {
+    if (!persistState.supported || persistState.persisted || persistState.asked) return;
+    persistState.asked = true;
+    navigator.storage.persist().then(function (ok) { persistState.persisted = ok; }, function () {});
+  }
+
+  var ua = navigator.userAgent || '';
+  var platform = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) ? 'ios'
+    : /Android/.test(ua) ? 'android' : 'desktop';
+  function isStandalone() {
+    return navigator.standalone === true || (root.matchMedia && root.matchMedia('(display-mode: standalone)').matches);
+  }
+  var deferredInstall = null;
+  root.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferredInstall = e; store.set({ installable: true }); });
+  root.addEventListener('appinstalled', function () { deferredInstall = null; store.set({ installable: false }); });
+
   // ---- helpers --------------------------------------------------------------------------------
   function now() { return S.ids.nowIso(); }
 
@@ -166,6 +190,7 @@
       songs[rec.id] = rec;
       store.set({ songs: songs });
       scheduleSave();
+      requestPersist();
       return rec.id;
     },
 
@@ -308,6 +333,7 @@
         }, null, 2);
       }
       plainDownload(text, 'songsheets-backup-' + dateStamp() + '.json', 'application/json;charset=utf-8');
+      actions.updateSettings({ lastBackupAt: now() });
       ui.toast('Backup downloaded', { type: 'ok' });
     },
 
@@ -340,7 +366,11 @@
           var before = { songs: st.songs, sets: st.sets };
           var merged = S.storage.mergeData(st, res, { mode: mode });
           store.set({ songs: merged.songs, sets: merged.sets });
-          if (opts.includeSettings && res.settings) actions.updateSettings(res.settings);
+          requestPersist();
+          if (opts.includeSettings && res.settings) {
+            var keep = { lastBackupAt: store.get().settings.lastBackupAt, backupReminderAt: store.get().settings.backupReminderAt, installHintDismissed: store.get().settings.installHintDismissed };
+            actions.updateSettings(Object.assign({}, res.settings, keep));
+          }
           scheduleSave();
           var msg = S.storage.describeStats(merged.stats) + (warnings ? ' ' + warnings : '');
           var undo = function () { store.set(before); scheduleSave(); ui.toast('Import undone', { type: 'ok' }); };
@@ -355,6 +385,30 @@
     },
 
     copyText: copyText,
+
+    storageInfo: function () {
+      return { supported: persistState.supported, persisted: persistState.persisted, platform: platform, standalone: isStandalone() };
+    },
+
+    /** What the library's "keep your songs safe" hint should say, or null. */
+    installHint: function () {
+      var st = store.get();
+      if (st.settings.installHintDismissed || isStandalone() || !/^https?:$/.test(root.location.protocol)) return null;
+      if (!Object.keys(st.songs).length) return null;
+      if (platform === 'ios') return { platform: 'ios', canPrompt: false };
+      if (platform === 'android') return { platform: 'android', canPrompt: !!deferredInstall };
+      return deferredInstall ? { platform: 'desktop', canPrompt: true } : null;
+    },
+
+    install: function () {
+      if (!deferredInstall) return Promise.resolve(false);
+      var p = deferredInstall;
+      deferredInstall = null;
+      p.prompt();
+      return p.userChoice.then(function (c) { store.set({ installable: false }); return c && c.outcome === 'accepted'; }, function () { return false; });
+    },
+
+    dismissInstallHint: function () { actions.updateSettings({ installHintDismissed: true }); },
 
     /** Write pending changes now. Returns {ok, message}. */
     flush: function () {
@@ -523,10 +577,24 @@
 
   applyTheme(store.get().settings.theme);
   router.start();
+  checkPersisted().then(function (p) { if (!p && Object.keys(store.get().songs).length) requestPersist(); });
+  setTimeout(function () {
+    var st = store.get();
+    if (!S.storage.backupReminderDue(st.songs, st.settings, Date.now())) return;
+    actions.updateSettings({ backupReminderAt: now() });
+    var last = st.settings.lastBackupAt;
+    ui.toast(last
+      ? 'Your last backup was ' + Math.round((Date.now() - Date.parse(last)) / 864e5) + ' days ago. Songs live only in this browser, so download a fresh one.'
+      : 'You have not backed up your songs yet. They live only in this browser, so download a backup to keep them safe.', {
+      sticky: true, actionLabel: 'Back up', onAction: function () { actions.exportBackup(); }
+    });
+  }, 1500);
   if (loaded.warning) ui.toast(loaded.warning, { type: 'error', sticky: true });
 
   // ---- offline support (http/https only; file:// cannot use service workers) -------------------
-  if (/^https?:$/.test(root.location.protocol) && 'serviceWorker' in navigator) {
+  // Not on localhost while developing (a cache-first worker would hide edits); add ?sw=1 to test offline there.
+  var devHost = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(root.location.hostname) && !/[?&]sw=1(&|$)/.test(root.location.search);
+  if (/^https?:$/.test(root.location.protocol) && 'serviceWorker' in navigator && !devHost) {
     root.addEventListener('load', function () {
       navigator.serviceWorker.register('./sw.js').then(function (reg) {
         function offerUpdate(worker) {

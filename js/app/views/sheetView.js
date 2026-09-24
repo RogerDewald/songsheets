@@ -41,6 +41,40 @@
     var el = h('div', { class: 'sheet-view' }, toolbar, page);
 
     function settings() { return ctx.store.get().settings; }
+    var moreOpen = false;
+
+    // Phones: the toolbar slides away while you scroll down through a song and comes back when you scroll up.
+    var narrow = root.matchMedia ? root.matchMedia('(max-width: 640px)') : { matches: false };
+    var lastY = root.scrollY;
+    function onScroll() {
+      var y = root.scrollY;
+      var start = el.offsetTop;                  // the sticky toolbar's own offsetTop moves while it is stuck
+      var hide = narrow.matches && !moreOpen && y > lastY + 4 && y > start + 80;
+      if (hide) toolbar.classList.add('is-tucked');
+      else if (y < lastY - 4 || y <= start) toolbar.classList.remove('is-tucked');
+      if (Math.abs(y - lastY) > 4) lastY = y;
+    }
+    root.addEventListener('scroll', onScroll, { passive: true });
+
+    // Keep the screen on while a song is open (Screen Wake Lock; silently skipped where unsupported).
+    var wakeLock = null;
+    var destroyed = false;
+    function wantAwake() { return settings().keepAwake !== false && !destroyed && root.document.visibilityState === 'visible'; }
+    function acquireWake() {
+      if (!wantAwake() || wakeLock || !root.navigator.wakeLock) return;
+      root.navigator.wakeLock.request('screen').then(function (lock) {
+        if (!wantAwake()) { lock.release(); return; }
+        wakeLock = lock;
+        lock.addEventListener('release', function () { if (wakeLock === lock) wakeLock = null; });
+      }).catch(function () { /* not allowed right now (battery saver, no permission) */ });
+    }
+    function releaseWake() { if (wakeLock) { var l = wakeLock; wakeLock = null; l.release().catch(function () {}); } }
+    function onVisibility() { if (root.document.visibilityState === 'visible') acquireWake(); }
+    root.document.addEventListener('visibilitychange', onVisibility);
+    // some browsers only grant it after the page has been touched, so try again on interaction
+    el.addEventListener('pointerdown', acquireWake, { passive: true });
+    el.addEventListener('keydown', acquireWake);
+    acquireWake();
 
     function build() {
       var song = opts.getSong();
@@ -77,7 +111,7 @@
       }, 0);
 
       if (sheet.sourceHasChords) {
-        groups.push(h('div', { class: 'ctl-group' },
+        groups.push(h('div', { class: 'ctl-group ctl-primary' },
           h('button', {
             type: 'button', class: ['btn', 'btn-toggle', st.showChords ? 'is-on' : null], 'aria-pressed': String(st.showChords),
             title: (st.showChords ? 'Hide' : 'Show') + ' chords (C)',
@@ -89,17 +123,17 @@
         var choices = T.keyChoices(sheet.key);
         var keySel = D.select(choices.map(function (c) {
           var signed = c.semitones > 6 ? c.semitones - 12 : c.semitones;
-          var off = signed === 0 ? '' : ' (' + (signed > 0 ? '+' : '−') + Math.abs(signed) + ')';
-          return { value: c.semitones, label: c.label + off };
+          var off = signed === 0 ? '' : ' ' + (signed > 0 ? '+' : '−') + Math.abs(signed);
+          return { value: c.semitones, label: c.label.replace(' / ', '/') + off };
         }), sheet.transpose, function (v) { setTranspose(parseInt(v, 10)); }, { 'aria-label': 'Key', title: 'Choose a key' });
-        groups.push(h('div', { class: 'ctl-group transpose-group' },
+        groups.push(h('div', { class: 'ctl-group ctl-primary transpose-group' },
           D.iconButton('minus', 'Transpose down (−)', function () { setTranspose(sheet.transpose - 1); }),
           keySel,
           D.iconButton('plus', 'Transpose up (+)', function () { setTranspose(sheet.transpose + 1); }),
           sheet.transpose !== 0
-            ? h('button', { type: 'button', class: 'btn btn-small btn-ghost', title: 'Back to the written key (0)', on: { click: function () { setTranspose(0); } } }, 'Reset')
+            ? h('button', { type: 'button', class: 'btn btn-small btn-ghost btn-reset', title: 'Back to the written key (0)', on: { click: function () { setTranspose(0); } } }, 'Reset')
             : null));
-        groups.push(h('div', { class: 'ctl-group' },
+        groups.push(h('div', { class: 'ctl-group ctl-secondary' },
           D.select([
             { value: '', label: 'Auto ♯/♭' },
             { value: 'sharp', label: 'Sharps ♯' },
@@ -108,19 +142,28 @@
       }
 
       if (sheet.tuneCount > 1) {
-        groups.push(h('div', { class: 'ctl-group' },
+        groups.push(h('div', { class: 'ctl-group ctl-secondary' },
           D.select(sheet.tuneTitles.map(function (t, i) { return { value: i, label: t }; }), sheet.tuneIndex, function (v) {
             opts.setPrefs({ tuneIndex: parseInt(v, 10), transpose: 0 });     // songbase resets transpose on tune change
           }, { 'aria-label': 'Tune', title: 'Choose a tune' })));
       }
 
-      groups.push(h('div', { class: 'ctl-group' },
+      groups.push(h('div', { class: 'ctl-group ctl-secondary' },
         h('button', { type: 'button', class: 'btn btn-icon', title: 'Smaller text', 'aria-label': 'Smaller text', disabled: st.fontScale <= MIN_SCALE, on: { click: function () { bumpFont(-0.1); } } }, h('span', { class: 'font-glyph small-a' }, 'A')),
         h('button', { type: 'button', class: 'btn btn-icon', title: 'Larger text', 'aria-label': 'Larger text', disabled: st.fontScale >= MAX_SCALE, on: { click: function () { bumpFont(0.1); } } }, h('span', { class: 'font-glyph big-a' }, 'A'))));
 
+      // phones: one row of the essentials; the rest opens with "More"
+      groups.push(h('div', { class: 'ctl-group ctl-primary ctl-more' },
+        h('button', {
+          type: 'button', class: ['btn', 'btn-icon', 'btn-more', moreOpen ? 'is-on' : null],
+          'aria-expanded': String(moreOpen), 'aria-label': moreOpen ? 'Fewer controls' : 'More controls', title: moreOpen ? 'Fewer controls' : 'More controls',
+          on: { click: function () { moreOpen = !moreOpen; toolbar.classList.toggle('show-more', moreOpen); renderToolbar(); } }
+        }, D.icon(moreOpen ? 'close' : 'more'))));
+      toolbar.classList.toggle('show-more', moreOpen);
+
       groups.forEach(function (g) { toolbar.appendChild(g); });
       if (opts.extraControls && opts.extraControls.length) {
-        toolbar.appendChild(h('div', { class: 'ctl-group ctl-extra' }, opts.extraControls));
+        toolbar.appendChild(h('div', { class: 'ctl-group ctl-secondary ctl-extra' }, opts.extraControls));
       }
     }
 
@@ -160,6 +203,7 @@
     });
 
     var unsub = ctx.store.subscribe(function (st, patch) {
+      if (patch.settings) { if (st.settings.keepAwake === false) releaseWake(); else acquireWake(); }
       if (patch.songs || patch.settings || patch.sets) refresh();
     });
 
@@ -178,7 +222,13 @@
         if ((e.key === 'c' || e.key === 'C') && sheet.sourceHasChords) { ctx.actions.updateSettings({ showChords: !st.showChords }); return true; }
         return false;
       },
-      destroy: function () { unsub(); offClick(); offKey(); }
+      destroy: function () {
+        destroyed = true;
+        unsub(); offClick(); offKey();
+        root.removeEventListener('scroll', onScroll);
+        root.document.removeEventListener('visibilitychange', onVisibility);
+        releaseWake();
+      }
     };
   }
 

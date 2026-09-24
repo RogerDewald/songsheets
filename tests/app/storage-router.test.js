@@ -146,3 +146,23 @@ test('two tabs: rebase keeps both sides\' edits and deletions', () => {
   // nothing changed here: the stored copy wins entirely (including its deletions)
   assert.deepEqual(St.rebaseMap(base, base, { a: base.a }), { a: base.a });
 });
+
+test('backup reminder: only when there is unsaved work older than two weeks, once a day', () => {
+  const day = 24 * 3600 * 1000;
+  const now = Date.parse('2026-09-24T12:00:00.000Z');
+  const iso = (ms) => new Date(ms).toISOString();
+  const songs = { a: song('a', { createdAt: iso(now - 30 * day), updatedAt: iso(now - 2 * day) }) };
+  const base = St.normalizeSettings(null);
+  assert.equal(St.backupReminderDue({}, base, now), false);
+  assert.equal(St.backupReminderDue(songs, base, now), true);                                  // never backed up, 30 days of work
+  assert.equal(St.backupReminderDue(songs, Object.assign({}, base, { backupReminderAt: iso(now - 3600e3) }), now), false);   // shown an hour ago
+  assert.equal(St.backupReminderDue(songs, Object.assign({}, base, { lastBackupAt: iso(now - day) }), now), false);          // backed up after the last edit
+  assert.equal(St.backupReminderDue(songs, Object.assign({}, base, { lastBackupAt: iso(now - 20 * day) }), now), true);     // stale backup
+  assert.equal(St.backupReminderDue(songs, Object.assign({}, base, { lastBackupAt: iso(now - 5 * day) }), now), false);     // recent enough
+  const fresh = { b: song('b', { createdAt: iso(now - 2 * day), updatedAt: iso(now - day) }) };
+  assert.equal(St.backupReminderDue(fresh, base, now), false);                                 // brand-new library
+  const s2 = St.normalizeSettings({ keepAwake: false, lastBackupAt: 'nonsense', installHintDismissed: true });
+  assert.equal(s2.keepAwake, false);
+  assert.equal(s2.lastBackupAt, null);
+  assert.equal(s2.installHintDismissed, true);
+});
