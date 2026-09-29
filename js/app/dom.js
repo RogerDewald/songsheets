@@ -99,7 +99,12 @@
     grip: ['M9 6h.01', 'M15 6h.01', 'M9 12h.01', 'M15 12h.01', 'M9 18h.01', 'M15 18h.01'],
     check: ['M5 12l5 5 9-10'],
     file: ['M6 3h8l5 5v13H6z', 'M14 3v5h5'],
-    addList: ['M4 6h10', 'M4 12h10', 'M4 18h6', 'M17 14v7', 'M13.5 17.5h7']
+    addList: ['M4 6h10', 'M4 12h10', 'M4 18h6', 'M17 14v7', 'M13.5 17.5h7'],
+    sparkle: ['M10.5 3l1.9 5.6L18 10.5l-5.6 1.9L10.5 18l-1.9-5.6L3 10.5l5.6-1.9z', 'M19 14l.8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8z'],
+    clipboard: ['M9 4h6v3H9z', 'M9 5.5H7a1 1 0 0 0-1 1V20a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V6.5a1 1 0 0 0-1-1h-2'],
+    info: ['M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z', 'M12 11v5', 'M12 8h.01'],
+    warn: ['M12 3.5l9.5 16.5h-19z', 'M12 10v4.5', 'M12 17.5h.01'],
+    home: ['M4 11l8-7 8 7', 'M6 10v10h12V10']
   };
 
   function icon(name, opts) {
@@ -201,6 +206,18 @@
       : d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: d.getFullYear() === now.getFullYear() ? undefined : 'numeric' });
   }
 
+  /** "Today", "Yesterday", or the date: what a list of songs wants to say about when one was last edited. */
+  function formatDay(iso) {
+    if (!iso) return '';
+    var d = new Date(iso);
+    if (isNaN(d)) return '';
+    var now = new Date();
+    var days = Math.round((new Date(now.getFullYear(), now.getMonth(), now.getDate()) - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 864e5);
+    if (days === 0) return 'Today';
+    if (days === 1) return 'Yesterday';
+    return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: d.getFullYear() === now.getFullYear() ? undefined : 'numeric' });
+  }
+
   root.SongSheets = root.SongSheets || {};
   root.SongSheets.dom = {
     h: h,
@@ -213,6 +230,7 @@
     select: select,
     isTyping: isTyping,
     keepFocus: keepFocus,
-    formatDate: formatDate
+    formatDate: formatDate,
+    formatDay: formatDay
   };
 })(typeof globalThis !== 'undefined' ? globalThis : this);

@@ -6,7 +6,7 @@
   var h = D.h;
   var ui = S.ui;
   var doc = root.document;
-  var APP_VERSION = '1.1.0';
+  var APP_VERSION = '1.2.0';
 
   // ---- state and persistence ------------------------------------------------------------------
   var ls = S.storage.getLocalStorage();
@@ -386,6 +386,11 @@
 
     copyText: copyText,
 
+    /** One tap: put the "convert a music sheet" prompt on the clipboard for an AI assistant. */
+    copyAiPrompt: function () {
+      return copyText(S.aiConvert.PROMPT, 'Prompt copied. Paste it into your AI assistant, along with your music sheet.');
+    },
+
     storageInfo: function () {
       return { supported: persistState.supported, persisted: persistState.persisted, platform: platform, standalone: isStandalone() };
     },
@@ -512,7 +517,7 @@
   };
 
   var current = null;
-  var NAV_OF = { library: 'library', song: 'library', edit: 'library', 'new': 'library', sets: 'sets', set: 'sets', play: 'sets', settings: 'settings', help: 'help' };
+  var NAV_OF = { library: 'library', song: 'library', edit: 'library', 'new': 'library', convert: 'library', sets: 'sets', set: 'sets', play: 'sets', settings: 'settings', help: 'help' };
 
   function show(route) {
     ui.closeMenu();

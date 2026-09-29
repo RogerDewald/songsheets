@@ -24,17 +24,20 @@
         ctx.router.navigate('/set/' + encodeURIComponent(id));
       });
     }
+    var addFab = h('button', { type: 'button', class: 'fab no-print', 'aria-label': 'New set list', on: { click: newSet } }, D.icon('plus', { size: 26 }));
     var el = h('section', { class: 'view view-sets' },
       h('div', { class: 'toolbar' }, h('div', { class: 'toolbar-row' },
         h('h1', { class: 'view-title' }, 'Set lists'),
         h('span', { class: 'spacer' }),
-        D.button('New set list', newSet, { primary: true, icon: 'plus' }))),
-      body);
+        D.button('New set list', newSet, { primary: true, icon: 'plus', class: 'set-add-btn' }))),
+      body,
+      addFab);
 
     function render() {
       var st = ctx.store.get();
       var sets = setList(st);
       D.clear(body);
+      el.classList.toggle('is-empty', !sets.length);
       if (!sets.length) {
         body.appendChild(h('div', { class: 'empty-state' },
           h('h2', null, 'No set lists yet'),
@@ -49,7 +52,7 @@
           h('a', { class: 'set-link', href: '#/set/' + encodeURIComponent(s.id) },
             h('span', { class: 'song-title' }, s.name),
             h('span', { class: 'song-meta' }, titles.length + ' song' + (titles.length === 1 ? '' : 's') + (titles.length ? ': ' + titles.slice(0, 4).join(', ') + (titles.length > 4 ? '…' : '') : ''))),
-          h('span', { class: 'song-date muted small' }, D.formatDate(s.updatedAt)),
+          h('span', { class: 'song-date muted small', title: 'Last edited ' + new Date(s.updatedAt).toLocaleString() }, D.formatDay(s.updatedAt)),
           titles.length ? h('a', { class: 'btn btn-icon', href: '#/set/' + encodeURIComponent(s.id) + '/play/0', title: 'Play', 'aria-label': 'Play ' + s.name }, D.icon('play')) : null));
       });
       body.appendChild(list);
@@ -67,7 +70,7 @@
 
     var titleEl = h('h1', { class: 'view-title' });
     var itemsEl = h('ol', { class: 'set-items' });
-    var addInput = h('input', { class: 'input', type: 'search', placeholder: 'Add a song: type to search your library', 'aria-label': 'Add a song to this set', autocomplete: 'off' });
+    var addInput = h('input', { class: 'input', type: 'search', placeholder: 'Search your songs to add', 'aria-label': 'Add a song to this set', autocomplete: 'off' });
     var results = h('ul', { class: 'typeahead', role: 'listbox', hidden: true });
     var dragFrom = null;
 
@@ -127,6 +130,16 @@
       });
     }
 
+    function removeItem(index) {
+      var removed = Object.assign({}, set().items[index]);
+      var song = ctx.store.get().songs[removed.songId];
+      updateItems(function (items) { items.splice(index, 1); });
+      ctx.ui.toast('Removed “' + (song ? song.title : 'song') + '” from the set', {
+        duration: 7000, actionLabel: 'Undo',
+        onAction: function () { updateItems(function (items) { items.splice(Math.min(index, items.length), 0, Object.assign({}, removed)); }); }
+      });
+    }
+
     function itemRow(item, index, st) {
       var song = st.songs[item.songId];
       if (!song) return null;
@@ -144,7 +157,7 @@
       if (base.sourceHasChords) {
         var keyOpts = [{ value: 'song', label: 'Song’s key (' + (T.keyLabel(base.key, song.transpose || 0) || '?') + ')' }]
           .concat(T.keyChoices(base.key).map(function (c) { return { value: c.semitones, label: c.label }; }));
-        controls.push(h('label', { class: 'mini-field' }, h('span', null, 'Key'),
+        controls.push(h('label', { class: 'mini-field mini-field-key' }, h('span', null, 'Key'),
           D.select(keyOpts, item.transpose === null ? 'song' : item.transpose, function (v) {
             setItem({ transpose: v === 'song' ? null : parseInt(v, 10) });
           }, { 'aria-label': 'Key for ' + song.title })));
@@ -156,7 +169,7 @@
           }, { 'aria-label': 'Capo for ' + song.title })));
       }
       if (base.tuneCount > 1) {
-        controls.push(h('label', { class: 'mini-field' }, h('span', null, 'Tune'),
+        controls.push(h('label', { class: 'mini-field mini-field-tune' }, h('span', null, 'Tune'),
           D.select([{ value: '', label: 'Song’s tune' }].concat(base.tuneTitles.map(function (t, i) { return { value: i, label: t }; })),
             item.tuneIndex === null ? '' : item.tuneIndex, function (v) { setItem({ tuneIndex: v === '' ? null : parseInt(v, 10) }); },
             { 'aria-label': 'Tune for ' + song.title })));
@@ -168,13 +181,14 @@
         h('span', { class: 'drag-handle', title: 'Drag to reorder', 'aria-hidden': 'true' }, D.icon('grip', { size: 18 })),
         h('span', { class: 'set-num' }, String(index + 1)),
         h('div', { class: 'set-item-main' },
-          h('a', { class: 'set-item-title', href: '#/set/' + encodeURIComponent(id) + '/play/' + index }, song.title),
+          h('div', { class: 'set-item-top' },
+            h('a', { class: 'set-item-title', href: '#/set/' + encodeURIComponent(id) + '/play/' + index }, song.title),
+            h('div', { class: 'set-item-actions' },
+              D.iconButton('up', 'Move up', function () { move(index, index - 1); }, { disabled: index === 0, class: 'btn-ghost' }),
+              D.iconButton('down', 'Move down', function () { move(index, index + 1); }, { disabled: index === set().items.length - 1, class: 'btn-ghost' }),
+              D.iconButton('close', 'Remove from set', function () { removeItem(index); }, { class: 'btn-ghost' }))),
           shapes ? h('span', { class: 'muted small' }, shapes) : null,
-          h('div', { class: 'set-item-controls' }, controls)),
-        h('div', { class: 'set-item-actions' },
-          D.iconButton('up', 'Move up', function () { move(index, index - 1); }, { disabled: index === 0 }),
-          D.iconButton('down', 'Move down', function () { move(index, index + 1); }, { disabled: index === set().items.length - 1 }),
-          D.iconButton('close', 'Remove from set', function () { updateItems(function (items) { items.splice(index, 1); }); })));
+          h('div', { class: 'set-item-controls' }, controls)));
       li.addEventListener('dragstart', function (e) {
         dragFrom = index;
         li.classList.add('dragging');
@@ -225,12 +239,13 @@
     var el = h('section', { class: 'view view-set' },
       h('div', { class: 'view-nav' }, h('a', { class: 'btn btn-ghost back-link', href: '#/sets' }, D.icon('back', { size: 18 }), 'Set lists')),
       h('div', { class: 'toolbar' }, h('div', { class: 'toolbar-row' },
-        titleEl,
-        D.iconButton('edit', 'Rename set', function () {
-          ctx.ui.prompt({ title: 'Rename set list', label: 'Name', value: set().name, okLabel: 'Rename' }).then(function (name) {
-            if (name) ctx.actions.updateSet(id, { name: name });
-          });
-        }),
+        h('div', { class: 'set-title-line' },
+          titleEl,
+          D.iconButton('edit', 'Rename set', function () {
+            ctx.ui.prompt({ title: 'Rename set list', label: 'Name', value: set().name, okLabel: 'Rename' }).then(function (name) {
+              if (name) ctx.actions.updateSet(id, { name: name });
+            });
+          })),
         h('span', { class: 'spacer' }),
         playBtn,
         exportBtn,
@@ -244,7 +259,7 @@
       h('div', { class: 'typeahead-wrap' }, h('div', { class: 'search-wrap' }, D.icon('search', { size: 18 }), addInput), results),
       emptyNote,
       itemsEl,
-      h('p', { class: 'muted small' }, 'Key changes here apply only in this set. “Capo” shows the chord shapes to play with a capo, while the set still sounds in the chosen key.'));
+      h('p', { class: 'muted small' }, 'Key changes here apply only in this set. “Capo” shows the chord shapes to play with a capo, while the set still sounds in the chosen key. “Tune” picks which of a song\'s tunes to show.'));
 
     render();
     var unsub = ctx.store.subscribe(function (st, p) {
@@ -278,6 +293,9 @@
     var counter = h('span', { class: 'set-counter' }, (index + 1) + ' / ' + items().length);
     var prev = D.iconButton('back', 'Previous song ([)', function () { go(index - 1); }, { disabled: index === 0 });
     var next = D.iconButton('next', 'Next song (])', function () { go(index + 1); }, { disabled: index >= items().length - 1 });
+    var prevBig = h('button', { type: 'button', class: 'btn btn-lg', disabled: index === 0, 'aria-label': 'Previous song', on: { click: function () { go(index - 1); } } }, D.icon('back', { size: 20 }), h('span', null, 'Previous'));
+    var nextBig = h('button', { type: 'button', class: 'btn btn-lg', disabled: index >= items().length - 1, 'aria-label': 'Next song', on: { click: function () { go(index + 1); } } }, h('span', null, 'Next'), D.icon('next', { size: 20 }));
+    var playBar = h('div', { class: 'play-bar no-print' }, prevBig, h('span', { class: 'set-counter' }, (index + 1) + ' / ' + items().length), nextBig);
     var exportBtn = D.iconButton('download', 'Export this song', function () {
       var st = ctx.store.get();
       ctx.ui.menu(exportBtn, ctx.actions.exportMenuItems('song', function () { return [view.getSheet()]; }, { songs: [st.songs[item().songId]], set: null, filenameBase: st.songs[item().songId].title }));
@@ -315,11 +333,12 @@
       h('div', { class: 'view-nav play-nav' },
         h('a', { class: 'btn btn-ghost back-link', href: '#/set/' + encodeURIComponent(id) }, D.icon('back', { size: 18 }), set().name),
         h('span', { class: 'spacer' }),
-        prev, counter, next),
+        h('span', { class: 'play-nav-controls' }, prev, counter, next)),
       view.el,
       h('div', { class: 'play-footer' },
         index > 0 ? h('a', { class: 'btn', href: '#/set/' + encodeURIComponent(id) + '/play/' + (index - 1) }, D.icon('back', { size: 18 }), ctx.store.get().songs[items()[index - 1].songId].title) : h('span'),
-        index < items().length - 1 ? h('a', { class: 'btn', href: '#/set/' + encodeURIComponent(id) + '/play/' + (index + 1) }, ctx.store.get().songs[items()[index + 1].songId].title, D.icon('next', { size: 18 })) : h('span')));
+        index < items().length - 1 ? h('a', { class: 'btn', href: '#/set/' + encodeURIComponent(id) + '/play/' + (index + 1) }, ctx.store.get().songs[items()[index + 1].songId].title, D.icon('next', { size: 18 })) : h('span')),
+      playBar);
 
     // swipe left/right on touch screens
     var touchX = null;

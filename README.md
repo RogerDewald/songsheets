@@ -2,7 +2,8 @@
 
 Write your own chord song sheets, transpose them to any key, organise them into set lists, and
 export them as PDF, Word, ChordPro, plain text, songbase text, a stand-alone web page or a JSON
-backup. It is plain HTML, CSS and JavaScript with no server and no build step. Your songs are kept
+backup. Turn a photo or PDF of a music sheet into a song with any AI assistant, using a ready-made
+prompt. It is plain HTML, CSS and JavaScript with no server and no build step. Your songs are kept
 in your browser's local storage.
 
 The song format, the way chords sit over the lyrics, and the transposition tables come from
@@ -14,8 +15,9 @@ songbase pastes into Songsheets unchanged, and the other way round.
 <p align="center">
   <img src="docs/screenshot-song.png" width="200" alt="A song on a phone: chords in blue sit above the lyrics, with a compact toolbar for chords, key and more">
   <img src="docs/screenshot-song-dark.png" width="200" alt="The same song in dark mode: white lyrics and grey chords on black">
-  <img src="docs/screenshot-library.png" width="200" alt="The song library on a phone, with search, tags and favourites">
+  <img src="docs/screenshot-library.png" width="200" alt="The song library on a phone: one search row, tags, key badges, a + button and a tab bar">
   <img src="docs/screenshot-editor.png" width="200" alt="Editing a song on a phone: the text uses [chord] brackets inline">
+  <img src="docs/screenshot-convert.png" width="200" alt="Convert a music sheet with AI: copy the prompt, ask an assistant, paste the reply back">
 </p>
 
 ## Running it
@@ -33,12 +35,19 @@ songbase pastes into Songsheets unchanged, and the other way round.
   an app and works offline.
 - **iPhone:** Safari can delete data from websites you have not opened for 7 days. Apps added to
   the home screen are exempt, so use Songsheets from the home-screen icon. The home-screen app has
-  its own storage, separate from Safari: tap **Back up** in Safari first, then **Import** the file in
-  the app.
+  its own storage, separate from Safari: in Safari download a backup first (**Settings → Download
+  backup**), then import the file in the app (**+ → Import files**).
 - Songsheets asks the browser to keep its storage ("persistent storage"), and reminds you to
   download a backup when the last one is more than two weeks older than your changes.
-- On a phone the song toolbar is one row (chords, key, More) and slides away while you scroll down.
-  The screen stays on while a song is open; turn that off in Settings.
+- On a phone the four main pages (Library, Sets, Settings, Help) have a labelled tab bar at the bottom,
+  and the **+** button adds a song: write one, convert a music sheet with AI, import files. Pages you
+  work inside (a song, the editor, a set, the converter) use the whole screen instead.
+- On a song, **Edit** sits at the top and a **⋯** menu holds favourite, add to set, copy lyrics and
+  export. The toolbar below it is one row (chords, key, More) and slides away while you scroll down;
+  **More** opens sharps or flats, tune and text size, each with its name beside it. The screen stays on
+  while a song is open; turn that off in Settings.
+- In the editor the buttons stay put while you write, and author and tags fold away to leave room for
+  the text.
 - In a set list, swipe left or right to move between songs.
 
 ## Writing a song
@@ -75,6 +84,27 @@ Chords are drawn the songbase way. Each one is a zero-width marker placed exactl
 was, so the lyrics never move. Two chords that are closer than their names are wide will overlap,
 so space them by hand (`[F#m  Bm]`). Copying a sheet from the page gives lyrics only, because the
 chord names are drawn by CSS.
+
+## Converting a music sheet with AI
+
+Have a photo, PDF or screenshot of a song? **+ → Convert a music sheet with AI** on a phone, or the
+**Convert with AI** button on a computer, takes you through three steps:
+
+1. **Copy the prompt.** One button puts a ready-made prompt on the clipboard. It tells an AI assistant
+   exactly how to write a Songsheets song. (It is also on the Help page and in the editor's ⋯ menu.)
+2. **Ask your assistant.** Paste the prompt into ChatGPT, Claude, Gemini or any assistant that can read
+   images, and attach your sheet, or paste its text underneath.
+3. **Paste the reply back.** Songsheets picks out the title, author, chords and words, tidies the usual
+   slips, shows a preview with a summary (lines, chords, key), and adds the song when you press
+   **Add to library**.
+
+Songsheets uploads nothing: the sheet goes only to the assistant you choose. Assistants can misplace a
+chord or mishear a word, so look over the preview. The reader copes with what assistants often send
+instead of the exact format: a code block around the song, `[Chorus]` or `Verse 2` labels, chords
+written above the words, or ChordPro. Everything it changes is listed under the preview.
+
+If the song is already text with the chords above the words, the way chord websites show it, skip the
+assistant: paste that text straight into step 3 and Songsheets converts it itself, exactly.
 
 ## Transposing
 
@@ -132,6 +162,9 @@ installed copies pick up the new version.
 - `npm test` (or `node --test`) runs the tests. They cover the parser, the chord grammar, the
   songbase transposition vectors, rendering, storage, import and every export format. There are no
   dependencies.
+- The AI prompt is `PROMPT` in `js/app/aiConvert.js`, with a worked example that tests run through the
+  real parser. Each rule the prompt states is pinned to what the parser does, so if you change the
+  song format, the tests show which sentence of the prompt went out of date.
 - `python tools/fix-escapes.py` turns invisible characters in sources into `\u` escapes. A test fails if any are left.
 - `node tools/sync-css.js` regenerates `js/export/cssStrings.js` after editing a stylesheet. The
   stand-alone HTML export embeds the CSS, because a page opened from a file cannot fetch it.

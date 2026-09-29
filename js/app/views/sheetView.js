@@ -116,7 +116,7 @@
             type: 'button', class: ['btn', 'btn-toggle', st.showChords ? 'is-on' : null], 'aria-pressed': String(st.showChords),
             title: (st.showChords ? 'Hide' : 'Show') + ' chords (C)',
             on: { click: function () { ctx.actions.updateSettings({ showChords: !st.showChords }); } }
-          }, D.icon('music', { size: 18 }), h('span', { class: 'btn-label' }, 'Chords'))));
+          }, D.icon('music', { size: 18 }), h('span', { class: 'chords-label' }, 'Chords'))));
       }
 
       if (sheet.sourceHasChords && st.showChords) {
@@ -134,6 +134,7 @@
             ? h('button', { type: 'button', class: 'btn btn-small btn-ghost btn-reset', title: 'Back to the written key (0)', on: { click: function () { setTranspose(0); } } }, 'Reset')
             : null));
         groups.push(h('div', { class: 'ctl-group ctl-secondary' },
+          h('span', { class: 'ctl-caption' }, 'Sharps or flats'),
           D.select([
             { value: '', label: 'Auto ♯/♭' },
             { value: 'sharp', label: 'Sharps ♯' },
@@ -143,27 +144,30 @@
 
       if (sheet.tuneCount > 1) {
         groups.push(h('div', { class: 'ctl-group ctl-secondary' },
+          h('span', { class: 'ctl-caption' }, 'Tune'),
           D.select(sheet.tuneTitles.map(function (t, i) { return { value: i, label: t }; }), sheet.tuneIndex, function (v) {
             opts.setPrefs({ tuneIndex: parseInt(v, 10), transpose: 0 });     // songbase resets transpose on tune change
           }, { 'aria-label': 'Tune', title: 'Choose a tune' })));
       }
 
       groups.push(h('div', { class: 'ctl-group ctl-secondary' },
-        h('button', { type: 'button', class: 'btn btn-icon', title: 'Smaller text', 'aria-label': 'Smaller text', disabled: st.fontScale <= MIN_SCALE, on: { click: function () { bumpFont(-0.1); } } }, h('span', { class: 'font-glyph small-a' }, 'A')),
-        h('button', { type: 'button', class: 'btn btn-icon', title: 'Larger text', 'aria-label': 'Larger text', disabled: st.fontScale >= MAX_SCALE, on: { click: function () { bumpFont(0.1); } } }, h('span', { class: 'font-glyph big-a' }, 'A'))));
+        h('span', { class: 'ctl-caption' }, 'Text size'),
+        h('span', { class: 'ctl-pair' },
+          h('button', { type: 'button', class: 'btn btn-icon', title: 'Smaller text', 'aria-label': 'Smaller text', disabled: st.fontScale <= MIN_SCALE, on: { click: function () { bumpFont(-0.1); } } }, h('span', { class: 'font-glyph small-a' }, 'A')),
+          h('button', { type: 'button', class: 'btn btn-icon', title: 'Larger text', 'aria-label': 'Larger text', disabled: st.fontScale >= MAX_SCALE, on: { click: function () { bumpFont(0.1); } } }, h('span', { class: 'font-glyph big-a' }, 'A')))));
 
       // phones: one row of the essentials; the rest opens with "More"
       groups.push(h('div', { class: 'ctl-group ctl-primary ctl-more' },
         h('button', {
           type: 'button', class: ['btn', 'btn-icon', 'btn-more', moreOpen ? 'is-on' : null],
-          'aria-expanded': String(moreOpen), 'aria-label': moreOpen ? 'Fewer controls' : 'More controls', title: moreOpen ? 'Fewer controls' : 'More controls',
+          'aria-expanded': String(moreOpen), 'aria-label': moreOpen ? 'Hide display options' : 'Display options', title: moreOpen ? 'Hide display options' : 'Display options: sharps or flats, tune, text size',
           on: { click: function () { moreOpen = !moreOpen; toolbar.classList.toggle('show-more', moreOpen); renderToolbar(); } }
-        }, D.icon(moreOpen ? 'close' : 'more'))));
+        }, moreOpen ? D.icon('close') : h('span', { class: 'font-glyph display-glyph', 'aria-hidden': 'true' }, 'Aa'))));
       toolbar.classList.toggle('show-more', moreOpen);
 
       groups.forEach(function (g) { toolbar.appendChild(g); });
       if (opts.extraControls && opts.extraControls.length) {
-        toolbar.appendChild(h('div', { class: 'ctl-group ctl-secondary ctl-extra' }, opts.extraControls));
+        toolbar.appendChild(h('div', { class: 'ctl-group ctl-secondary ctl-extra' }, h('span', { class: 'ctl-caption' }, 'Export this song'), opts.extraControls));
       }
     }
 

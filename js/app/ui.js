@@ -115,7 +115,7 @@
       if (it.separator) { list.appendChild(h('div', { class: 'menu-sep', role: 'separator' })); return; }
       if (it.heading) { list.appendChild(h('div', { class: 'menu-heading' }, it.heading)); return; }
       list.appendChild(h('button', {
-        type: 'button', class: 'menu-item', role: 'menuitem', disabled: !!it.disabled,
+        type: 'button', class: ['menu-item', it.danger ? 'is-danger' : null], role: 'menuitem', disabled: !!it.disabled,
         on: { click: function () { closeMenu(); it.onSelect(); } }
       }, it.icon ? D.icon(it.icon, { size: 18 }) : h('span', { class: 'menu-icon-space' }),
       h('span', { class: 'menu-text' }, h('span', { class: 'menu-label' }, it.label), it.hint ? h('span', { class: 'menu-hint' }, it.hint) : null)));

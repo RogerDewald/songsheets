@@ -29,7 +29,8 @@
     keepAwake: true,          // keep the screen on while a song is open
     lastBackupAt: null,       // ISO time of the last backup download
     backupReminderAt: null,   // ISO time the last backup reminder was shown
-    installHintDismissed: false
+    installHintDismissed: false,
+    editorHintDismissed: false   // the starter tip in an empty editor was closed
   };
 
   function str(v, d) { return typeof v === 'string' ? v : (d === undefined ? '' : d); }
@@ -93,6 +94,7 @@
     if (typeof s.lastBackupAt === 'string' && !isNaN(Date.parse(s.lastBackupAt))) out.lastBackupAt = s.lastBackupAt;
     if (typeof s.backupReminderAt === 'string' && !isNaN(Date.parse(s.backupReminderAt))) out.backupReminderAt = s.backupReminderAt;
     if (typeof s.installHintDismissed === 'boolean') out.installHintDismissed = s.installHintDismissed;
+    if (typeof s.editorHintDismissed === 'boolean') out.editorHintDismissed = s.editorHintDismissed;
     return out;
   }
 

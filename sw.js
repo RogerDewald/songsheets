@@ -1,7 +1,7 @@
 /* Songsheets — service worker: cache-first app shell so the app works offline once visited.
  * Bump VERSION (tools/bump-version.js) whenever any cached file changes. */
 'use strict';
-var VERSION = '1.1.0';
+var VERSION = '1.2.0';
 var CACHE = 'songsheets-' + VERSION;
 var ASSETS = [
   './',
@@ -46,12 +46,14 @@ var ASSETS = [
   './js/app/router.js',
   './js/app/ui.js',
   './js/app/example.js',
+  './js/app/aiConvert.js',
   './js/app/views/sheetView.js',
   './js/app/views/library.js',
   './js/app/views/viewer.js',
   './js/app/views/editor.js',
   './js/app/views/sets.js',
   './js/app/views/settings.js',
+  './js/app/views/convert.js',
   './js/app/main.js',
   './vendor/jspdf.umd.min.js',
   './vendor/docx.umd.js'

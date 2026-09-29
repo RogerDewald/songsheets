@@ -3,7 +3,7 @@
  * DevTools protocol (no dependencies). Needs Node 22+ and Chrome or Edge, and a running server:
  *   python tools/serve.py            (in another terminal)
  *   node tools/screenshots.js [http://localhost:8123/]
- * Writes docs/screenshot-library.png, -song.png, -song-dark.png and -editor.png. */
+ * Writes docs/screenshot-library.png, -song.png, -song-dark.png, -editor.png and -convert.png. */
 'use strict';
 const { spawn } = require('node:child_process');
 const fs = require('node:fs');
@@ -118,6 +118,11 @@ async function shot(name) {
     return 1;
   })()`);
   await shot('editor');
+
+  await evaluate("location.hash = '#/convert', 1");
+  await waitFor("!!document.querySelector('.copy-prompt')");
+  await evaluate("document.querySelectorAll('.toast').forEach(t => t.remove()), window.scrollTo(0, 0), document.activeElement && document.activeElement.blur(), 1");
+  await shot('convert');
 })().catch((e) => { console.error(e); process.exitCode = 1; }).finally(async () => {
   try { ws && ws.close(); } catch (e) { /* ignore */ }
   proc.kill();

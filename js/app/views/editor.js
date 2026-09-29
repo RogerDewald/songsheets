@@ -42,7 +42,7 @@
     var tagsIn = h('input', { class: 'input', type: 'text', value: (initial.tags || []).join(', '), placeholder: 'Tags, separated by commas', 'aria-label': 'Tags', maxlength: 400 });
     var ta = h('textarea', {
       class: 'input lyrics-input', spellcheck: 'false', autocapitalize: 'off', autocomplete: 'off',
-      'aria-label': 'Song text', placeholder: 'Type the song here.\n\n[G]Chords go in square [C]brackets.\n  Chorus lines start with two spaces.\n\nType \\ or $ to insert [].'
+      'aria-label': 'Song text', placeholder: 'Type or paste the song here.\n\n[G]Chords go in square [C]brackets.\n  Chorus lines start with two spaces.'
     });
     ta.value = initial.lyrics || '';
     var dupNote = h('p', { class: 'field-note warn', hidden: true });
@@ -60,11 +60,16 @@
         h('li', null, h('kbd', null, '\\'), ' or ', h('kbd', null, '$'), ' inserts ', h('code', null, '[]'), ' with the cursor inside.'),
         h('li', null, 'Inside brackets, a lower-case a–g becomes a capital: typing ', h('code', null, 'bb'), ' gives ', h('code', null, 'Bb'), '.'),
         h('li', null, h('kbd', null, 'Tab'), ' indents the selected lines (chorus), ', h('kbd', null, 'Shift'), '+', h('kbd', null, 'Tab'), ' removes it. Press ', h('kbd', null, 'Esc'), ' then ', h('kbd', null, 'Tab'), ' to leave the text box.')),
-      h('p', { class: 'muted small' }, 'This is the songbase format, so text pastes between the two unchanged.'));
+      h('p', { class: 'muted small' }, 'This is the songbase format, so text pastes between the two unchanged.'),
+      h('p', null, D.button('Convert with AI', function () { ctx.router.navigate('/convert'); }, { icon: 'sparkle', class: 'btn-small btn-soft' })));
 
-    var shortcutToggle = h('label', { class: 'check small', title: 'Type \\ or $ for [], and capitalise chord letters' },
-      h('input', { type: 'checkbox', checked: shortcutsOn, on: { change: function (e) { shortcutsOn = e.target.checked; ctx.actions.updateSettings({ editorShortcuts: shortcutsOn }); } } }),
-      ' Chord shortcuts');
+    var shortcutBox = h('input', { type: 'checkbox', checked: shortcutsOn, on: { change: function (e) { setShortcuts(e.target.checked); } } });
+    var shortcutToggle = h('label', { class: 'check small shortcut-toggle', title: 'Type \\ or $ for [], and capitalise chord letters' }, shortcutBox, h('span', null, 'Chord shortcuts'));
+    function setShortcuts(on) {
+      shortcutsOn = !!on;
+      shortcutBox.checked = shortcutsOn;
+      ctx.actions.updateSettings({ editorShortcuts: shortcutsOn });
+    }
 
     function fields() {
       return {
@@ -79,9 +84,11 @@
       return !!(titleIn.value.trim() || ta.value.trim() || authorIn.value.trim());
     }
 
-    function setStatus(text, cls) {
-      status.textContent = text;
+    /** text: "Saved" | "Editing…" | an error; time: shown after it, and dropped on narrow screens. */
+    function setStatus(text, cls, time) {
+      D.replaceChildren(status, h('span', { class: 'save-text' }, text), time ? h('span', { class: 'save-time' }, ' ' + time) : null);
       status.className = 'save-status' + (cls ? ' ' + cls : '');
+      status.title = text + (time ? ' ' + time : '');
     }
 
     function save() {
@@ -101,7 +108,7 @@
       lastSavedAt = st.songs[id] && st.songs[id].updatedAt;
       var r = ctx.actions.flush ? ctx.actions.flush() : { ok: true };
       if (!r.ok) setStatus('Changes ' + r.message, 'error');
-      else setStatus('Saved ' + D.formatDate(lastSavedAt), 'ok');
+      else setStatus('Saved', 'ok', D.formatDate(lastSavedAt));
     }
 
     function changed() {
@@ -111,6 +118,8 @@
       saveTimer = setTimeout(save, 500);
       schedulePreview();
       checkDuplicate();
+      updateHint();
+      updateMetaSummary();
     }
 
     function checkDuplicate() {
@@ -195,6 +204,13 @@
       replaceRange(b.start, b.end, next, b.start, b.start + next.length);
     }
 
+    /** Chorus lines start with two spaces: indent the selected lines, or take the indent off when they all have it. */
+    function toggleChorus() {
+      var b = lineBounds();
+      var lines = ta.value.slice(b.start, b.end).split('\n').filter(function (l) { return l.trim() !== ''; });
+      indentLines(lines.length > 0 && lines.every(function (l) { return /^ {2}/.test(l); }));
+    }
+
     function wrapChord() {
       var s = ta.selectionStart;
       var e = ta.selectionEnd;
@@ -246,9 +262,10 @@
       var show = force === undefined ? helpPanel.hidden : force;
       helpPanel.hidden = !show;
       helpBtn.setAttribute('aria-expanded', String(show));
+      if (show && !el.classList.contains('show-preview')) helpPanel.scrollIntoView({ block: 'nearest' });
     }
-    var helpBtn = D.button('Format help', function () { toggleHelp(); }, { icon: 'help' });
-    helpBtn.setAttribute('aria-expanded', 'false');
+    var helpBtn = h('button', { type: 'button', class: 'btn help-btn', 'aria-expanded': 'false', title: 'How to format a song', on: { click: function () { toggleHelp(); } } },
+      D.icon('help', { size: 18 }), h('span', { class: 'btn-label' }, 'Formatting help'));
 
     var mode = 'text';
     var paneToggle = h('div', { class: 'pane-toggle', role: 'tablist', 'aria-label': 'Editor panes' },
@@ -271,7 +288,7 @@
       else ctx.router.navigate('/library');
     }
 
-    var deleteBtn = D.button('Delete', function () {
+    function deleteSong() {
       if (!created) { dirty = false; ctx.router.navigate('/library'); return; }
       ctx.ui.confirm({ title: 'Delete this song?', message: '“' + fields().title + '” will be removed from your library and from every set list. This cannot be undone, unless you have a backup.', okLabel: 'Delete', danger: true })
         .then(function (yes) {
@@ -281,14 +298,60 @@
           ctx.actions.deleteSong(id);
           ctx.router.navigate('/library');
         });
-    }, { icon: 'trash', danger: true, title: isNew ? 'Discard' : 'Delete this song' });
+    }
 
-    var snippets = h('div', { class: 'snippet-bar', role: 'toolbar', 'aria-label': 'Insert' },
-      h('button', { type: 'button', class: 'btn btn-small', title: 'Insert a chord [ ] (or wrap the selection)', on: { click: wrapChord } }, '[ ]'),
-      h('button', { type: 'button', class: 'btn btn-small', title: 'Indent the selected lines as a chorus', on: { click: function () { indentLines(false); } } }, 'Chorus ⇥'),
-      h('button', { type: 'button', class: 'btn btn-small', title: 'Remove the chorus indent', on: { click: function () { indentLines(true); } } }, '⇤'),
+    var moreBtn = h('button', { type: 'button', class: 'btn btn-icon', 'aria-label': 'More actions', 'aria-haspopup': 'menu', title: 'More actions' }, D.icon('more'));
+    moreBtn.addEventListener('click', function () {
+      ctx.ui.menu(moreBtn, [
+        { label: 'Formatting help', hint: 'How chords, choruses and verses are written', icon: 'help', onSelect: function () { toggleHelp(true); } },
+        { label: 'Convert a music sheet with AI', hint: 'A photo, PDF or text becomes a song', icon: 'sparkle', onSelect: function () { ctx.router.navigate('/convert'); } },
+        { label: 'Copy the AI prompt', hint: 'To paste into ChatGPT, Claude or Gemini', icon: 'clipboard', onSelect: function () { ctx.actions.copyAiPrompt(); } },
+        { separator: true },
+        { label: shortcutsOn ? 'Turn off chord shortcuts' : 'Turn on chord shortcuts', hint: 'Type \\ or $ to insert [ ]', icon: 'edit', onSelect: function () { setShortcuts(!shortcutsOn); } },
+        { separator: true },
+        { label: created ? 'Delete this song' : 'Discard this song', icon: 'trash', danger: true, onSelect: deleteSong }
+      ]);
+    });
+
+    var snippets = h('div', { class: 'snippet-bar', role: 'toolbar', 'aria-label': 'Insert', on: { mousedown: function (e) { if (e.target.closest && e.target.closest('.btn')) e.preventDefault(); } } },
+      h('button', { type: 'button', class: 'btn btn-small', title: 'Insert a chord [ ] (or wrap the selection)', on: { click: wrapChord } }, '[ ] Chord'),
+      h('button', { type: 'button', class: 'btn btn-small', title: 'Make the selected lines a chorus (indented two spaces), or turn them back into a verse', on: { click: toggleChorus } }, 'Chorus'),
       h('button', { type: 'button', class: 'btn btn-small', title: 'Make this line a comment', on: { click: function () { prefixLine('# '); } } }, '# Comment'),
       shortcutToggle);
+
+    // phones: author and tags fold away, so the text box gets the room
+    var metaSummary = h('span', { class: 'meta-summary' });
+    var metaToggle = h('button', { type: 'button', class: 'meta-toggle', 'aria-expanded': 'false', on: { click: function () { toggleMeta(); } } },
+      D.icon('down', { size: 16 }), h('span', null, 'Author and tags'), metaSummary);
+    function toggleMeta(force) {
+      var show = force === undefined ? !fieldsEl.classList.contains('show-meta') : force;
+      fieldsEl.classList.toggle('show-meta', show);
+      metaToggle.setAttribute('aria-expanded', String(show));
+    }
+    function updateMetaSummary() {
+      var parts = [authorIn.value.trim(), tagsIn.value.split(',').map(function (t) { return t.trim(); }).filter(Boolean).join(', ')].filter(Boolean);
+      metaSummary.textContent = parts.length ? ' · ' + parts.join(' · ') : '';
+    }
+
+    var touch = !!(root.matchMedia && root.matchMedia('(pointer: coarse)').matches);
+    var hint = h('div', { class: 'notice editor-hint', role: 'note' },
+      h('button', {
+        type: 'button', class: 'btn btn-ghost btn-icon hint-close', 'aria-label': 'Hide this tip', title: 'Hide this tip',
+        on: { click: function () { ctx.actions.updateSettings({ editorHintDismissed: true }); updateHint(); } }
+      }, D.icon('close', { size: 16 })),
+      h('p', null, h('strong', null, 'Chords go in [square brackets]'), ', right before the syllable they belong to: ', h('code', null, 'A[G]mazing grace'), '. ',
+        touch ? ['Tap ', h('strong', null, '[ ] Chord'), ' to put one in, then type its name.'] : ['Type ', h('kbd', null, '\\'), ' to insert ', h('code', null, '[ ]'), '.']),
+      h('div', { class: 'notice-actions' },
+        D.button('Formatting help', function () { toggleHelp(true); }, { icon: 'help', class: 'btn-small' }),
+        D.button('Convert with AI', function () { ctx.router.navigate('/convert'); }, { icon: 'sparkle', class: 'btn-small btn-soft' })));
+    function updateHint() { hint.hidden = ta.value.trim() !== '' || ctx.store.get().settings.editorHintDismissed === true; }
+
+    var fieldsEl = h('div', { class: 'editor-fields' },
+      h('label', { class: 'field field-title' }, h('span', { class: 'field-label' }, 'Title'), titleIn, dupNote),
+      metaToggle,
+      h('div', { class: 'editor-meta' },
+        h('label', { class: 'field' }, h('span', { class: 'field-label' }, 'Author'), authorIn),
+        h('label', { class: 'field' }, h('span', { class: 'field-label' }, 'Tags'), tagsIn)));
 
     var el = h('section', { class: 'view view-edit' },
       h('div', { class: 'toolbar editor-toolbar' },
@@ -298,11 +361,9 @@
           h('span', { class: 'spacer' }),
           paneToggle,
           helpBtn,
-          deleteBtn)),
-      h('div', { class: 'editor-fields' },
-        h('label', { class: 'field field-title' }, h('span', { class: 'field-label' }, 'Title'), titleIn, dupNote),
-        h('label', { class: 'field' }, h('span', { class: 'field-label' }, 'Author'), authorIn),
-        h('label', { class: 'field' }, h('span', { class: 'field-label' }, 'Tags'), tagsIn)),
+          moreBtn)),
+      fieldsEl,
+      hint,
       h('div', { class: 'editor-panes' },
         h('div', { class: 'pane pane-text' }, snippets, ta),
         h('div', { class: 'pane pane-preview' }, previewBar, preview),
@@ -317,7 +378,9 @@
     if (isNew && route.query.help === '1') toggleHelp(true);
     renderPreview();
     checkDuplicate();
-    setStatus(existing ? 'Saved ' + D.formatDate(existing.updatedAt) : 'New song', existing ? 'ok' : '');
+    updateHint();
+    updateMetaSummary();
+    if (existing) setStatus('Saved', 'ok', D.formatDate(existing.updatedAt)); else setStatus('New song');
 
     return {
       el: el,

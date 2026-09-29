@@ -10,6 +10,7 @@
     { name: 'song', pattern: '/song/:id' },
     { name: 'edit', pattern: '/edit/:id' },
     { name: 'new', pattern: '/new' },
+    { name: 'convert', pattern: '/convert' },
     { name: 'sets', pattern: '/sets' },
     { name: 'set', pattern: '/set/:id' },
     { name: 'play', pattern: '/set/:id/play/:index' },

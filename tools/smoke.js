@@ -147,6 +147,22 @@ function check(name, ok, detail) {
     check('Word export builds a .docx', docx.head === 'PK', JSON.stringify(docx));
   }
 
+  // Convert with AI: copy the prompt, paste a reply, check it, add the song
+  await evaluate("Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: (t) => { window.__clip = t; return Promise.resolve(); } } }), location.hash = '#/convert', 1");
+  await waitFor("!!document.querySelector('.copy-prompt')");
+  await evaluate("document.querySelector('.copy-prompt').click(), 1");
+  await waitFor("typeof window.__clip === 'string'");
+  check('Convert: Copy puts the whole prompt on the clipboard', await evaluate('window.__clip === SongSheets.aiConvert.PROMPT'));
+  const reply = '```\n# Title: Smoke Song\n# Author: A. Tester\n\n1\n[G]Alpha [C]beta\n```';
+  await evaluate(`(() => { const t = document.querySelector('.reply-text'); t.value = ${JSON.stringify(reply)}; t.dispatchEvent(new Event('input', { bubbles: true })); return 1; })()`);
+  await waitFor("!document.querySelector('.convert-actions').hidden");
+  check('Convert: title, author and chords are picked out of the reply', await evaluate(
+    "document.querySelector('.convert-meta input').value === 'Smoke Song' && document.querySelectorAll('.convert-meta input')[1].value === 'A. Tester' && document.querySelectorAll('.convert-preview .chord-word').length === 2"));
+  await evaluate("document.querySelector('.convert-actions .btn').click(), 1");
+  await waitFor("/^#\\/song\\//.test(location.hash)");
+  const added = await evaluate("(() => { const s = Object.values(SongSheets.app.store.get().songs).find((x) => x.title === 'Smoke Song'); return s ? { author: s.author, lyrics: s.lyrics } : null; })()");
+  check('Convert: Add puts the song in the library, without the code fence or header', !!added && added.author === 'A. Tester' && added.lyrics === '1\n[G]Alpha [C]beta', JSON.stringify(added));
+
   const relevant = consoleErrors.filter((e) => !/serviceworker|service worker|manifest/i.test(e));
   check('no page errors', relevant.length === 0, relevant.slice(0, 5).join(' | '));
   console.log(failures ? failures + ' check(s) failed' : 'all checks passed');
