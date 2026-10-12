@@ -116,13 +116,14 @@
       h('div', { class: 'toolbar' }, h('div', { class: 'toolbar-row' }, h('h1', { class: 'view-title' }, 'Help'))),
       h('div', { class: 'help-body' },
         h('h2', null, 'Adding songs'),
-        h('p', null, 'Type a song yourself, convert a music sheet with an AI assistant, or import files: backups, ChordPro, plain text and songbase.'),
+        h('p', null, 'Type a song yourself (New song in the Library), convert a music sheet with an AI assistant, or import files: backups, ChordPro, plain text and songbase.'),
         h('div', { class: 'help-card' },
           h('h3', null, D.icon('sparkle', { size: 18 }), 'Convert a music sheet with AI'),
           h('p', null, 'Have a photo, PDF or text of a song? Copy the prompt, paste it into ChatGPT, Claude, Gemini or any assistant together with your sheet, then paste its reply back here. Songsheets checks the result and shows a preview before it adds the song.'),
           h('div', { class: 'button-row' },
-            D.button('Copy the prompt', function () { ctx.actions.copyAiPrompt(); }, { primary: true, icon: 'clipboard' }),
-            D.button('Open Convert with AI', function () { ctx.router.navigate('/convert'); }, { icon: 'sparkle' }))),
+            D.button('Convert with AI', function () { ctx.router.navigate('/convert'); }, { primary: true, icon: 'sparkle' }),
+            D.button('Copy the prompt', function () { ctx.actions.copyAiPrompt(); }, { icon: 'clipboard' })),
+          h('p', { class: 'muted small' }, 'The Library has a Copy AI prompt button too (the + button on a phone), for when you only need the prompt.')),
         h('h2', null, 'Writing a song'),
         h('p', null, 'Songs are plain text. Chords go in square brackets, right before the syllable where they change. This is the same format songbase uses, so text pastes between the two unchanged.'),
         h('dl', { class: 'help-list' },
@@ -135,7 +136,7 @@
           row('### Tune name', 'Starts an alternative tune.'),
           row('**bold** *italic* a_b', 'Bold, italic, and a musical tie between words.'),
           row('[F#m  Bm] [N.C.] [x2]', 'Several chords at one spot; non-chords are never transposed.')),
-        h('p', null, D.button('Open the formatting example', function () { ctx.actions.openFormatExample(); }, { icon: 'file' })),
+        h('p', null, D.button('Start a new song with this help open', function () { ctx.router.navigate('/new?help=1'); }, { icon: 'edit' })),
         h('h2', null, 'Transposing'),
         h('p', null, 'Use − and + or pick a key in the song toolbar. The key is remembered for each song. In a set list each song can have its own key and capo; with a capo the sheet shows the chord shapes to play.'),
         h('h2', null, 'Set lists'),
@@ -154,7 +155,7 @@
           key('Esc', 'go back'),
           key('?', 'this help')),
         h('h2', null, 'Where are my songs?'),
-        h('p', null, 'Everything is saved in this browser only. Use Settings → Download backup to keep a copy or move to another device. To bring songs in, use Import files: the + button on a phone, or the Import button on a computer, in the Library.')));
+        h('p', null, 'Everything is saved in this browser only. Use Settings → Download backup to keep a copy or move to another device. To bring songs in, use Import files in the Library’s ⋯ menu, next to the search box.')));
     return { el: el, title: 'Help', destroy: function () {} };
   };
 })(typeof globalThis !== 'undefined' ? globalThis : this);

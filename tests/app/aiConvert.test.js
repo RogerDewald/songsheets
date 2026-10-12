@@ -279,8 +279,7 @@ function everySongInTheRepo() {
     else if (/\.txt$/.test(e.name) && !/expected|golden/.test(e.name)) songs.push({ name: path.relative(root, p), text: fs.readFileSync(p, 'utf8') });
   });
   walk(path.join(root, 'tests', 'fixtures'));
-  require('../../js/app/example.js');
-  globalThis.SongSheets.examples.forEach((s) => songs.push({ name: 'example: ' + s.title, text: s.lyrics }));
+  require('../fixtures/sample-songs.js').forEach((s) => songs.push({ name: 'sample: ' + s.title, text: s.lyrics }));
   JSON.parse(fs.readFileSync(path.join(root, 'tests', 'fixtures', 'export', 'songbase-api.json'), 'utf8')).songs
     .forEach((s) => songs.push({ name: 'songbase: ' + s.title, text: s.lyrics }));
   return songs;

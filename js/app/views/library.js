@@ -1,4 +1,4 @@
-/* Songsheets — Library view: search, sort, tags, favourites, add songs (write, convert with AI, import). */
+/* Songsheets — Library view: search, sort, tags, favourites, add songs (write, copy the AI prompt), and a ⋯ menu for import and backup. */
 (function (root) {
   'use strict';
   var S = root.SongSheets;
@@ -21,7 +21,7 @@
     var keyCache = new Map();
 
     var search = h('input', {
-      class: 'input search-input', type: 'search', placeholder: 'Search songs', value: query, title: 'Searches titles, lyrics, authors and tags',
+      class: 'input search-input', type: 'search', placeholder: 'Search', value: query, title: 'Searches titles, lyrics, authors and tags',
       'aria-label': 'Search songs', autocomplete: 'off', spellcheck: 'false',
       on: { input: function () { query = search.value; renderList(); syncUrl(); updateClear(); } }
     });
@@ -46,27 +46,27 @@
     var tagsRow = h('div', { class: 'chip-row', role: 'group', 'aria-label': 'Filter by tag' });
     var list = h('ul', { class: 'song-list', role: 'list' });
     var countEl = h('span', { class: 'list-count-text', 'aria-live': 'polite' });
-    var backupLink = h('button', { type: 'button', class: 'btn-link backup-link', title: 'Download a backup of all songs and sets', on: { click: function () { ctx.actions.exportBackup(); } } }, 'Back up');
-    var countRow = h('div', { class: 'muted small list-count' }, countEl, backupLink);
+    var countRow = h('div', { class: 'muted small list-count' }, countEl);
     var body = h('div', { class: 'library-body' });
     var hintSlot = h('div');
 
-    function examplesMissing() {
-      var have = {};
-      var songs = ctx.store.get().songs;
-      Object.keys(songs).forEach(function (k) { have[S.search.normalizeForSearch(songs[k].title)] = true; });
-      return (S.examples || []).some(function (ex) { return !have[S.search.normalizeForSearch(ex.title)]; });
+    /** The + button on phones: the two everyday ways to add a song. */
+    function addMenuItems() {
+      return [
+        { label: 'Write a new song', hint: 'Formatting help is in the editor', icon: 'edit', onSelect: function () { ctx.router.navigate('/new'); } },
+        { label: 'Copy the AI prompt', hint: 'Turn a music sheet into a song with ChatGPT, Claude or Gemini', icon: 'clipboard', onSelect: function () { ctx.actions.copyAiPrompt(); } }
+      ];
     }
 
-    /** Every way to get a song into the library, in one place (the + button on phones). */
-    function addMenuItems() {
-      var items = [
-        { label: 'Write a new song', hint: 'Start from a blank page', icon: 'edit', onSelect: function () { ctx.router.navigate('/new'); } },
-        { label: 'Convert a music sheet with AI', hint: 'A photo, PDF or text becomes a song', icon: 'sparkle', onSelect: function () { ctx.router.navigate('/convert'); } },
-        { label: 'Import files', hint: 'Backup, ChordPro, text or songbase', icon: 'upload', onSelect: function () { fileInput.click(); } }
+    /** The ⋯ button: what you need now and then, kept off the main screen. */
+    function moreMenuItems() {
+      var last = ctx.store.get().settings.lastBackupAt;
+      return [
+        { label: 'Import files', hint: 'Backup, ChordPro, text or songbase', icon: 'upload', onSelect: function () { fileInput.click(); } },
+        { label: 'Download a backup', hint: last ? 'Last backup: ' + D.formatDay(last) : 'You have not made one yet', icon: 'download', onSelect: function () { ctx.actions.exportBackup(); } },
+        { separator: true },
+        { label: 'Restore and storage', hint: 'In Settings', icon: 'settings', onSelect: function () { ctx.router.navigate('/settings'); } }
       ];
-      if (examplesMissing()) items.push({ label: 'Add example songs', hint: 'A few songs to look around with', icon: 'library', onSelect: function () { ctx.actions.loadExamples(); } });
-      return items;
     }
 
     function renderHint() {
@@ -91,18 +91,21 @@
       on: { click: function () { ctx.ui.menu(addFab, addMenuItems()); } }
     }, D.icon('plus', { size: 26 }));
 
+    var moreBtn = h('button', {
+      type: 'button', class: 'btn btn-icon library-more', 'aria-label': 'Import, backup and more', 'aria-haspopup': 'menu', title: 'Import, backup and more',
+      on: { click: function () { ctx.ui.menu(moreBtn, moreMenuItems()); } }
+    }, D.icon('more'));
+
     var el = h('section', { class: 'view view-library' },
       h('h1', { class: 'visually-hidden' }, 'Library'),
       h('div', { class: 'toolbar' },
         h('div', { class: 'toolbar-row library-search' },
           h('div', { class: 'search-wrap' }, D.icon('search', { size: 18 }), search, clearBtn),
-          sortSel),
+          sortSel,
+          moreBtn),
         h('div', { class: 'toolbar-row toolbar-actions' },
           D.button('New song', function () { ctx.router.navigate('/new'); }, { primary: true, icon: 'plus', title: 'New song (N)' }),
-          D.button('Convert with AI', function () { ctx.router.navigate('/convert'); }, { icon: 'sparkle', class: 'btn-soft', title: 'Turn a photo, PDF or text of a song into a Songsheets song' }),
-          D.button('Import', function () { fileInput.click(); }, { icon: 'upload', title: 'Import JSON backup, ChordPro, text or exported HTML files' }),
-          h('span', { class: 'spacer' }),
-          D.button('Back up', function () { ctx.actions.exportBackup(); }, { icon: 'download', class: 'btn-ghost', title: 'Download a backup of all songs and sets' }))),
+          D.button('Copy AI prompt', function () { ctx.actions.copyAiPrompt(); }, { icon: 'clipboard', class: 'btn-soft', title: 'Copy a prompt that has an AI assistant turn any music sheet into a Songsheets song' }))),
       hintSlot,
       tagsRow,
       countRow,
@@ -183,11 +186,11 @@
         h('h2', null, 'Welcome to Songsheets'),
         h('p', { class: 'lead' }, 'Write chord sheets, move them to any key, gather them into set lists, and print or export them. Everything stays in this browser.'),
         h('div', { class: 'start-cards' },
-          startCard('edit', 'Write a new song', 'Type it in, with chords in [square brackets]', function () { ctx.router.navigate('/new'); }),
-          startCard('sparkle', 'Convert a music sheet', 'Let an AI assistant turn a photo, PDF or text into a song', function () { ctx.router.navigate('/convert'); }),
-          startCard('upload', 'Import files', 'Backups, ChordPro, text and songbase files', function () { fileInput.click(); })),
-        h('button', { type: 'button', class: 'btn-link examples-link', on: { click: function () { ctx.actions.loadExamples(); } } }, 'Add three example songs to look around first'),
-        h('p', { class: 'muted small drop-hint' }, 'You can also drop files anywhere on this page.'));
+          startCard('edit', 'Write a new song', 'Type it in, with chords in [square brackets]. The editor shows you how.', function () { ctx.router.navigate('/new'); }),
+          startCard('clipboard', 'Copy the AI prompt', 'Paste it into ChatGPT, Claude or Gemini with a photo, PDF or text of a song', function () { ctx.actions.copyAiPrompt(); })),
+        h('p', { class: 'muted small restore-line' }, 'Moving from another device? ',
+          h('button', { type: 'button', class: 'btn-link', on: { click: function () { fileInput.click(); } } }, 'Import a backup or song files'),
+          h('span', { class: 'drop-hint' }, ', or drop them anywhere on this page'), '.'));
     }
 
     function clearFilters() {

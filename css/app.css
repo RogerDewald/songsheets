@@ -46,12 +46,7 @@ code { font-family: ui-monospace, Consolas, "Courier New", monospace; font-size:
   border-bottom: 1px solid var(--border);
   background: var(--background);
 }
-.brand { display: flex; align-items: center; gap: 8px; text-decoration: none; font-weight: bold; font-size: 1.15em; color: var(--title); }
-.brand-mark {
-  display: inline-flex; align-items: center; justify-content: center;
-  min-width: 2.2em; height: 1.9em; border-radius: 6px; padding: 0 4px;
-  background: var(--chord); color: var(--background); font-size: 0.8em; letter-spacing: -0.02em;
-}
+.brand { text-decoration: none; font-weight: bold; font-size: 1.15em; color: var(--title); }
 .app-nav { display: flex; gap: 2px; margin-left: auto; }
 .nav-link {
   display: inline-flex; align-items: center; gap: 6px; padding: 7px 10px; border-radius: 8px;
@@ -159,8 +154,7 @@ body[data-route="edit"] .app-main, body[data-route="new"] .app-main { max-width:
 /* ---- library ------------------------------------------------------------------------------------ */
 .view-library.is-empty .toolbar { display: none; }
 .library-search { flex-wrap: nowrap; }
-.sort-select { flex: 0 0 auto; }
-.toolbar-actions .spacer { flex: 1 1 0; }
+.sort-select, .library-more { flex: 0 0 auto; }
 .chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
 .chip {
   display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; min-height: 28px;
@@ -171,7 +165,6 @@ body[data-route="edit"] .app-main, body[data-route="new"] .app-main { max-width:
 .chip-count { opacity: 0.7; font-size: 0.85em; }
 .list-count { display: flex; align-items: center; justify-content: space-between; margin: 4px 0 6px; min-height: 30px; }
 .view-library.is-empty .list-count { display: none; }
-.backup-link { display: none; padding: 10px 0 10px 12px; min-height: 40px; font-size: 1em; }
 .song-list, .set-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--border); }
 .song-row, .set-row {
   display: flex; align-items: center; gap: 8px; padding: 2px 4px 2px 0; border-bottom: 1px solid var(--border);
@@ -192,7 +185,7 @@ body[data-route="edit"] .app-main, body[data-route="new"] .app-main { max-width:
 .empty-state h2 { color: var(--text); font-size: 1.5em; margin: 0 0 6px; text-wrap: balance; }
 .empty-state .lead, .convert-head .lead { text-wrap: pretty; }
 .empty-state .lead { max-width: 34em; margin: 0 auto; }
-.empty-state .examples-link { display: block; margin: 0 auto 4px; }
+.restore-line .btn-link { padding: 8px 2px; font-size: 1em; }
 .empty-results { padding: 20px 4px; text-align: center; color: var(--muted); }
 .empty-results p { margin: 0 0 10px; }
 .start-cards { display: grid; gap: 10px; margin: 22px 0 18px; text-align: left; }
@@ -209,7 +202,7 @@ body[data-route="edit"] .app-main, body[data-route="new"] .app-main { max-width:
 .start-title { font-weight: bold; color: var(--text); }
 .start-desc { font-size: 0.9em; color: var(--muted); }
 @media (min-width: 720px) {
-  .start-cards { grid-template-columns: repeat(3, 1fr); }
+  .start-cards { grid-template-columns: repeat(2, 1fr); }
   .start-card { flex-direction: column; align-items: flex-start; padding: 18px; }
 }
 body.drop-target::after {
@@ -245,7 +238,7 @@ body.drop-target::after {
   .sort-select { max-width: 8.6em; }
 }
 @media (max-width: 499px) { .song-date { display: none; } }
-@media (max-width: 640px) { .backup-link { display: inline-block; } .set-add-btn { display: none; } }
+@media (max-width: 640px) { .set-add-btn { display: none; } }
 @media (pointer: coarse) { .drop-hint { display: none; } }
 
 /* ---- song sheet view ---------------------------------------------------------------------------- */
@@ -482,6 +475,7 @@ body.drop-target::after {
   border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border)); background: color-mix(in srgb, var(--accent) 6%, var(--background));
 }
 .help-card p { margin: 0 0 12px; }
+.help-card .button-row + p { margin: 10px 0 0; }
 @media (max-width: 640px) {
   .setting-label { min-width: 0; flex: 1 1 100%; }
 }
@@ -620,5 +614,5 @@ body.drop-target::after {
 /* ---- print ------------------------------------------------------------------------------------------
    Ctrl+P on a page prints the page, not the app around it. (Printing through Export > Print builds its own document.) */
 @media print {
-  .view-nav, .fab, .app-nav, .play-bar, .play-footer, .convert-actions, .editor-hint, .backup-link { display: none !important; }
+  .view-nav, .fab, .app-nav, .play-bar, .play-footer, .convert-actions, .editor-hint { display: none !important; }
 }

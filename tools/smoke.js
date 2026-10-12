@@ -9,6 +9,7 @@ const { spawn } = require('node:child_process');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
+const SAMPLE_SONGS = require('../tests/fixtures/sample-songs.js');
 
 const root = path.join(__dirname, '..');
 const target = process.argv[2] || 'file:///' + path.join(root, 'index.html').replace(/\\/g, '/');
@@ -81,9 +82,9 @@ function check(name, ok, detail) {
   const exportsLoaded = await evaluate("!!(SongSheets.export && SongSheets.export.exportMenu && SongSheets.export.backup)");
   check('export modules loaded', exportsLoaded);
 
-  await evaluate("SongSheets.app.actions.loadExamples(), 1");
+  await evaluate(JSON.stringify(SAMPLE_SONGS) + ".forEach((s) => SongSheets.app.actions.createSong(s)), 1");
   await waitFor("document.querySelectorAll('.song-row').length === 3");
-  check('three example songs listed', true);
+  check('three sample songs listed', true);
 
   const id = await evaluate("Object.values(SongSheets.app.store.get().songs).find(s => s.title === 'Amazing Grace').id");
   await evaluate("location.hash = '#/song/' + " + JSON.stringify(id) + ", 1");

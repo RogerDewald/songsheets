@@ -9,6 +9,7 @@ const { spawn } = require('node:child_process');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
+const SAMPLE_SONGS = require('../tests/fixtures/sample-songs.js');
 
 const root = path.join(__dirname, '..');
 const target = (process.argv[2] || 'http://localhost:8123/').replace(/#.*$/, '');
@@ -77,19 +78,19 @@ async function shot(name) {
   await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
   await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: 'light' }] });
 
-  // seed a library: the example songs, no backup reminder, no install hint
+  // seed a library: the sample songs, no backup reminder, no install hint
   await send('Page.navigate', { url: target + '#/library' });
   await waitFor('!!(window.SongSheets && SongSheets.app)');
   await evaluate(`(() => {
     const A = SongSheets.app.actions;
     A.updateSettings({ theme: 'auto', fontScale: 1, showChords: true, lastBackupAt: new Date().toISOString(), installHintDismissed: true });
-    A.loadExamples();
+    ${JSON.stringify(SAMPLE_SONGS.filter((s) => s.tags.indexOf('help') < 0))}.forEach((s) => A.createSong(s));
     SongSheets.app.saveNow();
     return 1;
   })()`);
   await send('Page.reload');
   await sleep(300);
-  await waitFor("document.querySelectorAll('.song-row').length >= 3");
+  await waitFor("document.querySelectorAll('.song-row').length >= 2");
   await evaluate("document.querySelectorAll('.toast').forEach(t => t.remove()), document.activeElement && document.activeElement.blur(), 1");
   await shot('library');
 

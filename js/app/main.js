@@ -6,7 +6,7 @@
   var h = D.h;
   var ui = S.ui;
   var doc = root.document;
-  var APP_VERSION = '1.2.0';
+  var APP_VERSION = '1.3.0';
 
   // ---- state and persistence ------------------------------------------------------------------
   var ls = S.storage.getLocalStorage();
@@ -160,7 +160,8 @@
     setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 1500);
   }
 
-  function copyText(text, message) {
+  /** extra: more toast options for the "copied" toast (an action, a longer duration). */
+  function copyText(text, message, extra) {
     function fallback() {
       var ta = h('textarea', { style: 'position:fixed;top:-1000px;opacity:0' });
       ta.value = text;
@@ -175,7 +176,7 @@
       ? navigator.clipboard.writeText(text).then(function () { return true; }, function () { return fallback(); })
       : Promise.resolve(fallback());
     return p.then(function (ok) {
-      ui.toast(ok ? (message || 'Copied') : 'Could not copy to the clipboard', { type: ok ? 'ok' : 'error', duration: 2500 });
+      ui.toast(ok ? (message || 'Copied') : 'Could not copy to the clipboard', Object.assign({ type: ok ? 'ok' : 'error', duration: 2500 }, ok ? extra : null));
       return ok;
     });
   }
@@ -293,32 +294,6 @@
       if ('theme' in patch) applyTheme(settings.theme);
     },
 
-    loadExamples: function () {
-      var st = store.get();
-      var have = {};
-      Object.keys(st.songs).forEach(function (k) { have[S.search.normalizeForSearch(st.songs[k].title)] = true; });
-      var first = null;
-      var count = 0;
-      (S.examples || []).forEach(function (ex) {
-        if (have[S.search.normalizeForSearch(ex.title)]) return;
-        var id = actions.createSong(ex);
-        count++;
-        if (!first) first = id;
-      });
-      ui.toast(count ? count + ' example song' + (count === 1 ? '' : 's') + ' added' : 'The example songs are already in your library', { type: 'ok' });
-      return first;
-    },
-
-    openFormatExample: function () {
-      var st = store.get();
-      var guide = S.examples && S.examples[0];
-      if (!guide) return;
-      var t = S.search.normalizeForSearch(guide.title);
-      var found = Object.keys(st.songs).filter(function (k) { return S.search.normalizeForSearch(st.songs[k].title) === t; })[0];
-      var id = found || actions.createSong(guide);
-      router.navigate('/edit/' + encodeURIComponent(id));
-    },
-
     exportBackup: function () {
       var st = store.get();
       var text;
@@ -386,9 +361,14 @@
 
     copyText: copyText,
 
-    /** One tap: put the "convert a music sheet" prompt on the clipboard for an AI assistant. */
+    /** One tap: put the "convert a music sheet" prompt on the clipboard for an AI assistant. The toast
+     *  offers the way back in: Convert with AI, where the assistant's reply is checked before it is added. */
     copyAiPrompt: function () {
-      return copyText(S.aiConvert.PROMPT, 'Prompt copied. Paste it into your AI assistant, along with your music sheet.');
+      var r = router.current();
+      if (r && r.name === 'convert') return copyText(S.aiConvert.PROMPT, 'Prompt copied. Paste it into your AI assistant, along with your music sheet.');
+      return copyText(S.aiConvert.PROMPT, 'Prompt copied. Paste it into your AI assistant with your music sheet, then bring its reply back here.', {
+        duration: 9000, actionLabel: 'Paste reply', onAction: function () { router.navigate('/convert'); }
+      });
     },
 
     storageInfo: function () {
@@ -495,8 +475,7 @@
     return a;
   }
   var header = h('header', { class: 'app-header' },
-    h('a', { class: 'brand', href: '#/library', 'aria-label': 'Songsheets home' },
-      h('span', { class: 'brand-mark', 'aria-hidden': 'true' }, '[G]'), h('span', { class: 'brand-name' }, 'Songsheets')),
+    h('a', { class: 'brand', href: '#/library' }, 'Songsheets'),
     h('nav', { class: 'app-nav', 'aria-label': 'Main' },
       navLink('library', '#/library', 'Library', 'library'),
       navLink('sets', '#/sets', 'Sets', 'list'),
@@ -517,7 +496,7 @@
   };
 
   var current = null;
-  var NAV_OF = { library: 'library', song: 'library', edit: 'library', 'new': 'library', convert: 'library', sets: 'sets', set: 'sets', play: 'sets', settings: 'settings', help: 'help' };
+  var NAV_OF = { library: 'library', song: 'library', edit: 'library', 'new': 'library', convert: 'help', sets: 'sets', set: 'sets', play: 'sets', settings: 'settings', help: 'help' };
 
   function show(route) {
     ui.closeMenu();

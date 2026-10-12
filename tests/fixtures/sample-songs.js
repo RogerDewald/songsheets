@@ -1,8 +1,8 @@
-/* Songsheets — example songs for an empty library. All text is original or public domain.
- * Browser: window.SongSheets.examples
+/* Sample songs for the tests and the dev tools (smoke test, screenshots). The app itself ships no
+ * example songs: its formatting help lives in the editor. All text is original or public domain.
  */
-(function (root) {
-  'use strict';
+'use strict';
+(function () {
 
   var FORMAT_GUIDE = [
     '# Lines that start with # are comments. They show in grey.',
@@ -80,10 +80,9 @@
     'And [G]every [A]bird sings [D]for its sake.'
   ].join('\n');
 
-  root.SongSheets = root.SongSheets || {};
-  root.SongSheets.examples = [
+  module.exports = [
     { title: 'How to format a song', author: 'Songsheets', tags: ['help'], lyrics: FORMAT_GUIDE },
     { title: 'Amazing Grace', author: 'John Newton', tags: ['hymn', 'public domain'], lyrics: AMAZING_GRACE },
     { title: 'Morning Light', author: 'Songsheets example', tags: ['example'], lyrics: MORNING_LIGHT }
   ];
-})(typeof globalThis !== 'undefined' ? globalThis : this);
+})();

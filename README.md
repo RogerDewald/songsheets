@@ -36,12 +36,13 @@ songbase pastes into Songsheets unchanged, and the other way round.
 - **iPhone:** Safari can delete data from websites you have not opened for 7 days. Apps added to
   the home screen are exempt, so use Songsheets from the home-screen icon. The home-screen app has
   its own storage, separate from Safari: in Safari download a backup first (**Settings → Download
-  backup**), then import the file in the app (**+ → Import files**).
+  backup**), then import the file in the app (**Library → ⋯ → Import files**).
 - Songsheets asks the browser to keep its storage ("persistent storage"), and reminds you to
   download a backup when the last one is more than two weeks older than your changes.
 - On a phone the four main pages (Library, Sets, Settings, Help) have a labelled tab bar at the bottom,
-  and the **+** button adds a song: write one, convert a music sheet with AI, import files. Pages you
-  work inside (a song, the editor, a set, the converter) use the whole screen instead.
+  and the **+** button adds a song: write one, or copy the AI prompt. Import and backup sit in the
+  **⋯** menu beside the search box. Pages you work inside (a song, the editor, a set, the converter)
+  use the whole screen instead.
 - On a song, **Edit** sits at the top and a **⋯** menu holds favourite, add to set, copy lyrics and
   export. The toolbar below it is one row (chords, key, More) and slides away while you scroll down;
   **More** opens sharps or flats, tune and text size, each with its name beside it. The screen stays on
@@ -87,11 +88,12 @@ chord names are drawn by CSS.
 
 ## Converting a music sheet with AI
 
-Have a photo, PDF or screenshot of a song? **+ → Convert a music sheet with AI** on a phone, or the
-**Convert with AI** button on a computer, takes you through three steps:
+Have a photo, PDF or screenshot of a song? **Help → Convert with AI** takes you through three steps.
+For quick access the Library has a **Copy AI prompt** button (**+ → Copy the AI prompt** on a phone);
+the message it shows has a **Paste reply** button that opens step 3.
 
 1. **Copy the prompt.** One button puts a ready-made prompt on the clipboard. It tells an AI assistant
-   exactly how to write a Songsheets song. (It is also on the Help page and in the editor's ⋯ menu.)
+   exactly how to write a Songsheets song. (It is also in the Library and in the editor's ⋯ menu.)
 2. **Ask your assistant.** Paste the prompt into ChatGPT, Claude, Gemini or any assistant that can read
    images, and attach your sheet, or paste its text underneath.
 3. **Paste the reply back.** Songsheets picks out the title, author, chords and words, tidies the usual
